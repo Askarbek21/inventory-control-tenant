@@ -18,7 +18,7 @@ class CustomUserManager(BaseUserManager):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(phone_number,name, password, **extra_fields)
-    
+
 
 class CustomUser(AbstractUser):
     username=None
@@ -36,8 +36,8 @@ class CustomUser(AbstractUser):
 
 
 class Staff(models.Model):
-    store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='store_staff')
-    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    store = models.ForeignKey('stores.Store', on_delete=models.CASCADE, related_name='store_staff')
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True)
 
@@ -47,4 +47,3 @@ class Staff(models.Model):
 
     def __str__(self):
         return f'{self.user.phone_number} | {self.store.name} | {self.user.role}'
-

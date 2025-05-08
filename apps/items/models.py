@@ -2,9 +2,13 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 
+from apps import stores
+from apps.stores.models import Store
+
 
 class Category(models.Model):
     category_name = models.CharField(max_length=200)
+    store = models.ForeignKey('stores.Store', on_delete=models.CASCADE)
 
     def __str__(self):
         return self.category_name
@@ -18,6 +22,7 @@ class Category(models.Model):
 class Product(models.Model):
     product_name = models.CharField(max_length=200)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    store = models.ForeignKey('stores.Store', on_delete=models.CASCADE)
 
     def __str__(self):
         return self.product_name
@@ -30,6 +35,7 @@ class Product(models.Model):
 
 class Measurement(models.Model):
     measurement_name = models.CharField(max_length=100)
+    store = models.ForeignKey('stores.Store', on_delete=models.CASCADE)
 
     def __str__(self):
         return self.measurement_name
@@ -39,48 +45,49 @@ class Measurement(models.Model):
         db_table = 'measurement'
 
 
-class ArrivedProduct(models.Model):
+class Stock(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    measurement = models.ManyToManyField(Measurement, through='MeasurementArrivedProduct', related_name='measurements')
+    measurement = models.ManyToManyField(Measurement, through='MeasurementArrivedProductInStore',
+                                         related_name='measurements')
     date_of_arrived = models.DateTimeField(default=timezone.now)
     purchase_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     selling_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     min_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    store = models.ForeignKey(Store, on_delete=models.CASCADE)
 
-    # office should be here
     def __str__(self):
         return f'{self.product.product_name} - {self.date_of_arrived}'
 
     class Meta:
-        verbose_name_plural = "Arrived Products"
+        verbose_name_plural = "Stocks"
         ordering = ['-date_of_arrived']
-        db_table = 'arrived_products'
+        db_table = 'stock'
 
 
-class Stock(models.Model, ArrivedProduct):
-    def __str__(self):
-        # After date add market, where product came
-        return f'{self.product.product_name} - {self.date_of_arrived} '
-
-
-class MeasurementArrivedProduct(models.Model):
+class MeasurementArrivedProductInStore(models.Model):
+    stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
     measurement = models.ForeignKey(Measurement, on_delete=models.CASCADE)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+
     number = models.FloatField(validators=[MinValueValidator(0.0)])
 
     def __str__(self):
-        return f'{self.product.product_name} - {self.measurement.measurement_name}'
+        return f'{self.measurement.measurement_name}'
 
     class Meta:
-        verbose_name_plural = "Measurement Arrived Products"
-        db_table = 'measurement_arrived_products'
+        verbose_name_plural = "Measurement Arrived Products In Stock"
+        db_table = 'measurement_arrived_products_in_stock'
+
+
+class ArrivedProduct(Stock):
+    class Meta:
+        verbose_name_plural = "Arrived Products"
+        db_table = 'arrived_product'
 
 
 class DeletedItems(models.Model):
     model = models.CharField(max_length=230, null=True, blank=True)
     date_of_deleted = models.DateTimeField(default=timezone.now)
     data = models.JSONField()
-    
 
     def __str__(self):
         return f'{self.model} - {self.date_of_deleted}'
