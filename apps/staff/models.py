@@ -1,8 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 
-from apps.stores.models import Store
-from .constants import ROLE_CHOICES
+from config.constants import ROLE_CHOICES
 
 
 class CustomUserManager(BaseUserManager):
@@ -44,6 +43,7 @@ class Staff(models.Model):
     class Meta:
         db_table = 'staff'
         unique_together = ['store', 'user']
+        ordering = ['-date_joined']
 
     def __str__(self):
         return f'{self.user.phone_number} | {self.store.name} | {self.user.role}'
