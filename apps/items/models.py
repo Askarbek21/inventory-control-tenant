@@ -50,10 +50,11 @@ class Stock(models.Model):
     measurement = models.ManyToManyField(Measurement, through='MeasurementArrivedProductInStore',
                                          related_name='measurements')
     date_of_arrived = models.DateTimeField(default=timezone.now)
+    store = models.ForeignKey(Store, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
     purchase_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     selling_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     min_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    store = models.ForeignKey(Store, on_delete=models.CASCADE)
 
     def __str__(self):
         return f'{self.product.product_name} - {self.date_of_arrived}'
@@ -78,7 +79,9 @@ class MeasurementArrivedProductInStore(models.Model):
         db_table = 'measurement_arrived_products_in_stock'
 
 
-class ArrivedProduct(Stock):
+class ArrivedProduct(models.Model):
+    data = models.JSONField()
+
     class Meta:
         verbose_name_plural = "Arrived Products"
         db_table = 'arrived_product'

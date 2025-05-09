@@ -1,3 +1,4 @@
+from django.forms import model_to_dict
 from rest_framework.serializers import ModelSerializer
 from apps.items.models import *
 from rest_framework import serializers, routers
@@ -64,7 +65,7 @@ class StockSerializers(ModelSerializer):
         model = Stock
         fields = ['id',
                   'product_write', 'store_write', "product_read", 'purchase_price', 'selling_price',
-                  'min_price', 'measurement_write', 'measurement_read'
+                  'min_price', 'measurement_write', 'measurement_read', 'quantity',
                   ]
 
     def create(self, validated_data):
@@ -76,6 +77,7 @@ class StockSerializers(ModelSerializer):
                 measurement=item['measurement'],
                 number=item['number'],
             )
+
         return stock
 
     def update(self, instance, validated_data):
