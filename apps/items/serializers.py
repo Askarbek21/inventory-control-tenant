@@ -1,12 +1,11 @@
-from django.forms import model_to_dict
-from rest_framework.serializers import ModelSerializer
+from rest_framework import serializers
+
 from apps.items.models import *
-from rest_framework import serializers, routers
 from apps.stores.serializers import StoreSerializer
 from apps.suppliers.serializers import SuppliersModelSerializer
 
 
-class CategorySerializer(ModelSerializer):
+class CategorySerializer(serializers.ModelSerializer):
     store_write = serializers.PrimaryKeyRelatedField(queryset=Store.objects.filter(is_main=True), source='store',
                                                      write_only=True)
     store_read = StoreSerializer(read_only=True, source='store')
@@ -16,7 +15,7 @@ class CategorySerializer(ModelSerializer):
         fields = ['id', 'category_name', 'store_write', 'store_read']
 
 
-class ProductSerializer(ModelSerializer):
+class ProductSerializer(serializers.ModelSerializer):
     category_write = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), write_only=True,
                                                         source='category')
     category_read = CategorySerializer(read_only=True, source='category')
@@ -38,7 +37,7 @@ class MeasurementSerializer(ModelSerializer):
         fields = ['id', 'measurement_name', 'store']
 
 
-class MeasurementArrivedProductInStoreSerializers(ModelSerializer):
+class MeasurementArrivedProductInStoreSerializers(serializers.ModelSerializer):
     measurement_write = serializers.PrimaryKeyRelatedField(queryset=Measurement.objects.filter(store__is_main=True),
                                                            source='measurement', write_only=True)
     measurement_read = MeasurementSerializer(read_only=True, source='measurement', )
@@ -48,9 +47,9 @@ class MeasurementArrivedProductInStoreSerializers(ModelSerializer):
         fields = ['id', 'measurement_write', 'measurement_read', "number"]
 
 
-class StockSerializers(ModelSerializer):
-    store_write = serializers.PrimaryKeyRelatedField(queryset=Store.objects.all(), source='store',
-                                                     )
+
+class StockSerializers(serializers.ModelSerializer):
+    store_write = serializers.PrimaryKeyRelatedField(queryset=Store.objects.filter(is_main=True), source='store')
     product_write = serializers.PrimaryKeyRelatedField(queryset=Product.objects.filter(store__is_main=True),
                                                        source='product', write_only=True)
 

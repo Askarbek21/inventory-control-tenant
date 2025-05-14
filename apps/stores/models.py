@@ -13,6 +13,8 @@ class Store(models.Model):
 
     class Meta:
         db_table = 'stores'
+        ordering = ['name']
+        verbose_name_plural = 'Stores'
     
     def __str__(self):
         return self.name 
