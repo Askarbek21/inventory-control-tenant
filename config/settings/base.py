@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     'apps.items',
     'apps.transfer',
     'corsheaders',
+    'apps.suppliers',
 ]
 
 MIDDLEWARE = [
@@ -33,7 +34,7 @@ MIDDLEWARE = [
 ]
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "https://stock-control.uz/",
+    "https://stock-control.uz",
 ]
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [

@@ -4,6 +4,7 @@ from django.utils import timezone
 
 from apps import stores
 from apps.stores.models import Store
+from apps.suppliers.models import Supplier
 
 
 class Category(models.Model):
@@ -49,15 +50,18 @@ class Stock(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     measurement = models.ManyToManyField(Measurement, through='MeasurementArrivedProductInStore',
                                          related_name='measurements')
-    date_of_arrived = models.DateTimeField(default=timezone.now)
+    date_of_arrived = models.DateTimeField(auto_now_add=True)
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
     purchase_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     selling_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     min_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    history_of_prices = models.JSONField(default=dict)
+    supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, null=True, blank=True)
+    color = models.CharField(max_length=199, null=True, blank=True)
 
     def __str__(self):
-        return f'{self.product.product_name} - {self.date_of_arrived}'
+        return f'{self.product.product_name} -- {self.store.name}'
 
     class Meta:
         verbose_name_plural = "Stocks"
