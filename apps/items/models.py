@@ -2,7 +2,6 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.utils import timezone
 
-from apps import stores
 from apps.stores.models import Store
 from apps.suppliers.models import Supplier
 
