@@ -1,112 +1,140 @@
-from rest_framework import serializers
-
+from django.forms import model_to_dict
+from rest_framework.serializers import ModelSerializer
 from apps.items.models import *
+from rest_framework import serializers, routers
 from apps.stores.serializers import StoreSerializer
 from apps.suppliers.serializers import SuppliersModelSerializer
 
 
-class CategorySerializer(serializers.ModelSerializer):
-    store_write = serializers.PrimaryKeyRelatedField(queryset=Store.objects.filter(is_main=True), source='store',
-                                                     write_only=True)
-    store_read = StoreSerializer(read_only=True, source='store')
-
+class CategorySerializer(ModelSerializer):
     class Meta:
         model = Category
-        fields = ['id', 'category_name', 'store_write', 'store_read']
-
-
-class ProductSerializer(serializers.ModelSerializer):
-    category_write = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), write_only=True,
-                                                        source='category')
-    category_read = CategorySerializer(read_only=True, source='category')
-
-    store_write = serializers.PrimaryKeyRelatedField(queryset=Store.objects.filter(is_main=True),
-                                                     source='store',
-                                                     )
-
-    class Meta:
-        model = Product
-        fields = ['id', 'product_name', 'category_write', 'category_read', 'store_write', ]
+        fields = ['id', 'category_name', ]
 
 
 class MeasurementSerializer(ModelSerializer):
-    store = serializers.PrimaryKeyRelatedField(queryset=Store.objects.filter(is_main=True))
-
     class Meta:
         model = Measurement
-        fields = ['id', 'measurement_name', 'store']
+        fields = '__all__'
 
 
-class MeasurementArrivedProductInStoreSerializers(serializers.ModelSerializer):
-    measurement_write = serializers.PrimaryKeyRelatedField(queryset=Measurement.objects.filter(store__is_main=True),
+class MeasurementProductSerializers(ModelSerializer):
+    measurement_write = serializers.PrimaryKeyRelatedField(queryset=Measurement.objects.all(),
                                                            source='measurement', write_only=True)
     measurement_read = MeasurementSerializer(read_only=True, source='measurement', )
 
+    number = serializers.CharField()
+
     class Meta:
-        model = MeasurementArrivedProductInStore
-        fields = ['id', 'measurement_write', 'measurement_read', "number"]
+        model = MeasurementProduct
+        fields = ['id', 'measurement_write', 'measurement_read', 'number']
 
 
+class ProductSerializer(ModelSerializer):
+    category_write = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), write_only=True,
+                                                        source='category')
+    category_read = CategorySerializer(read_only=True, source='category')
+    measurement = MeasurementProductSerializers(many=True, source='measurementproduct_set')
 
-class StockSerializers(serializers.ModelSerializer):
-    store_write = serializers.PrimaryKeyRelatedField(queryset=Store.objects.filter(is_main=True), source='store')
-    product_write = serializers.PrimaryKeyRelatedField(queryset=Product.objects.filter(store__is_main=True),
+    class Meta:
+        model = Product
+        fields = ['id', 'product_name', 'category_write', 'category_read', 'measurement']
+
+    def create(self, validated_data):
+        measurement_data = validated_data.pop('measurementproduct_set')
+        product = Product.objects.create(**validated_data)
+        for mt in measurement_data:
+            MeasurementProduct.objects.create(product=product, **mt)
+        return product
+
+
+class StockSerializers(ModelSerializer):
+    store_write = serializers.PrimaryKeyRelatedField(queryset=Store.objects.filter(is_main=True), source='store',
+                                                     write_only=True)
+    store_read = StoreSerializer(source='store', read_only=True)
+
+    product_write = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all(),
                                                        source='product', write_only=True)
 
     product_read = ProductSerializer(read_only=True, source='product')
 
     supplier_read = SuppliersModelSerializer(read_only=True, source='supplier')
-    supplier_write = serializers.PrimaryKeyRelatedField(queryset=Supplier.objects.all(), write_only=True)
+    supplier_write = serializers.PrimaryKeyRelatedField(queryset=Supplier.objects.all(), write_only=True,
+                                                        source='supplier')
 
-    measurement_write = MeasurementArrivedProductInStoreSerializers(many=True, write_only=True)
-    measurement_read = MeasurementArrivedProductInStoreSerializers(many=True, read_only=True,
-                                                                   source='measurementarrivedproductinstore_set')
+    quantity = serializers.IntegerField(required=False)
+    purchase_price_in_us = serializers.FloatField(required=False)
+    purchase_price_in_uz = serializers.FloatField(required=False)
+    exchange_rate = serializers.FloatField(required=False)
+    selling_price = serializers.FloatField(required=False)
+    min_price = serializers.FloatField(required=False)
+    color = serializers.CharField(required=False)
 
     class Meta:
         model = Stock
         fields = ['id',
-                  'product_write', 'store_write', "product_read", 'purchase_price', 'selling_price',
-                  'min_price', 'measurement_write', 'measurement_read', 'quantity', 'history_of_prices', 'color',
-                  'supplier_read', 'supplier_write'
+                  'product_write', 'store_write', 'store_read', "product_read", 'purchase_price_in_uz',
+                  'purchase_price_in_us',
+                  'selling_price',
+                  'min_price', "exchange_rate", 'quantity', 'history_of_prices', 'color',
+                  'supplier_read', 'supplier_write',
                   ]
 
     def create(self, validated_data):
-        measurement_write = validated_data.pop('measurement_write')
-        purchase_price = float(validated_data.pop('purchase_price'))
-        selling_price = float(validated_data.pop('selling_price'))
-        min_price = float(validated_data.pop('min_price'))
+        selling_price = float(validated_data.pop('selling_price', 0))
+        min_price = float(validated_data.pop('min_price', 0))
+        exchange_rate = float(validated_data.pop('exchange_rate', 0))
+        purchase_price_in_us = float(validated_data.pop('purchase_price_in_us', 0))
+        purchase_price_in_uz = float(validated_data.pop('purchase_price_in_uz', 0))
+        quantity = float(validated_data.pop('quantity', 0))
+
         history = {
-            "purchase_price": purchase_price,
+            "purchase_price_in_us": purchase_price_in_us,
+            'purchase_price_in_uz': purchase_price_in_uz,
             "selling_price": selling_price,
             "min_price": min_price,
+            "exchange_rate": exchange_rate,
+            'quantity': quantity,
+
         }
-        stock = Stock.objects.create(**validated_data, history_of_prices=history, purchase_price=purchase_price,
+        stock = Stock.objects.create(**validated_data, history_of_prices=history,
                                      selling_price=selling_price,
-                                     min_price=min_price, )
-        for item in measurement_write:
-            MeasurementArrivedProductInStore.objects.create(
-                stock=stock,
-                measurement=item['measurement'],
-                number=item['number'],
-            )
+                                     min_price=min_price,
+                                     purchase_price_in_us=purchase_price_in_us,
+                                     purchase_price_in_uz=purchase_price_in_uz,
+                                     exchange_rate=exchange_rate, quantity=quantity)
 
         return stock
 
     def update(self, instance, validated_data):
-        measurement_write = validated_data.pop('measurement_write')
+        selling_price = float(validated_data.pop('selling_price'))
+        min_price = float(validated_data.pop('min_price'))
+        exchange_rate = float(validated_data.pop('exchange_rate'))
+        purchase_price_in_us = float(validated_data.pop('purchase_price_in_us'))
+        purchase_price_in_uz = float(validated_data.pop('purchase_price_in_uz'))
+        quantity = float(validated_data.pop('quantity'))
+
+        instance.selling_price = selling_price
+        instance.min_price = min_price
+        instance.exchange_rate = exchange_rate
+        instance.purchase_price_in_us = purchase_price_in_us
+        instance.purchase_price_in_uz = purchase_price_in_uz
+        instance.quantity = quantity
+
+        history = {
+            "purchase_price_in_us": purchase_price_in_us,
+            "purchase_price_in_uz": purchase_price_in_uz,
+            "selling_price": selling_price,
+            "min_price": min_price,
+            "exchange_rate": exchange_rate,
+            "quantity": quantity,
+
+        }
+        instance.history_of_prices = history
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
+
         instance.save()
-
-        instance.measurementarrivedproductinstore_set.all().delete()
-
-        for item in measurement_write:
-            MeasurementArrivedProductInStore.objects.create(
-                stock=instance,
-                measurement=item['measurement'],
-                number=item['number'],
-
-            )
 
         return instance

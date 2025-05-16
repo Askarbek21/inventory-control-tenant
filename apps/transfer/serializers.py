@@ -3,7 +3,7 @@ from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 from .models import *
 from apps.items.serializers import StockSerializers
-from ..items.models import MeasurementArrivedProductInStore
+from ..items.models import MeasurementProduct
 
 
 class TransferSerializer(ModelSerializer):
@@ -45,19 +45,16 @@ class TransferSerializer(ModelSerializer):
                     store=to_stock,
                     quantity=amount,
                     product=stock.product,
-                    purchase_price=stock.purchase_price,
+                    purchase_price_in_us=stock.purchase_price_in_us,
+                    purchase_price_in_uz=stock.purchase_price_in_uz,
                     selling_price=stock.selling_price,
                     min_price=stock.min_price,
-                    history_of_prices=stock.history_of_prices
+                    exchange_rate=stock.exchange_rate,
+                    history_of_prices=stock.history_of_prices,
+                    color=stock.color,
+                    supplier=stock.supplier,
                 )
 
-                measurements = from_stock.measurementarrivedproductinstore_set.all()
-                for measurement in measurements:
-                    MeasurementArrivedProductInStore.objects.create(
-                        measurement=measurement.measurement,
-                        number=measurement.number,
-                        stock=received_stock,
-                    )
                 received_stock.save()
             else:
                 receiving_stock.quantity += amount
@@ -67,19 +64,16 @@ class TransferSerializer(ModelSerializer):
                 store=to_stock,
                 quantity=amount,
                 product=stock.product,
-                purchase_price=stock.purchase_price,
+                purchase_price_in_us=stock.purchase_price_in_us,
+                purchase_price_in_uz=stock.purchase_price_in_uz,
                 selling_price=stock.selling_price,
                 min_price=stock.min_price,
-                history_of_prices=stock.history_of_prices
+                exchange_rate=stock.exchange_rate,
+                history_of_prices=stock.history_of_prices,
+                color=stock.color,
+                supplier=stock.supplier,
             )
 
-            measurements = from_stock.measurementarrivedproductinstore_set.all()
-            for measurement in measurements:
-                MeasurementArrivedProductInStore.objects.create(
-                    measurement=measurement.measurement,
-                    number=measurement.number,
-                    stock=received_stock,
-                )
             received_stock.save()
 
         return transfer
