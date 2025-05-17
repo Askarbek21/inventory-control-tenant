@@ -12,6 +12,6 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'some_task': {
         'task': 'apps.debts.tasks.deduct_due_debts',
-        'schedule': timedelta(seconds=15), 
+        'schedule': timedelta(days=1), 
     }
 }
