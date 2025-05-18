@@ -93,3 +93,4 @@ class DeletedItems(models.Model):
         verbose_name_plural = "Deleted Items"
         ordering = ['-date_of_deleted']
         db_table = 'deleted_items'
+

@@ -17,6 +17,11 @@ INSTALLED_APPS = [
     'apps.staff',
     'apps.stores',
     'apps.items',
+    'apps.sales',
+    'apps.debts',
+    'apps.reports',
+    'apps.clients',
+    'apps.admin',
     'apps.transfer',
     'corsheaders',
     'apps.suppliers',
@@ -32,10 +37,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "https://stock-control.uz",
-]
+CORS_ALLOW_ALL_ORIGINS = True 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     "accept",
