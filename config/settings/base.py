@@ -13,7 +13,9 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    #'rest_framework_roles',
     'rest_framework_simplejwt',
+    'corsheaders',
     'apps.staff',
     'apps.stores',
     'apps.items',
@@ -23,7 +25,6 @@ INSTALLED_APPS = [
     'apps.clients',
     'apps.admin',
     'apps.transfer',
-    'corsheaders',
     'apps.suppliers',
 ]
 
@@ -97,6 +98,10 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ]
+}
+
+REST_FRAMEWORK_ROLES = {
+  'ROLES': 'config.roles.ROLES',
 }
 
 SIMPLE_JWT = {
