@@ -16,7 +16,7 @@ urlpatterns = [
     path('api/v1/debts/', include('apps.debts.urls')),
     path('api/v1/reports/', include('apps.reports.urls')),
     path('api/v1/settings/', include('apps.admin.urls')),
-    path('api/v1/clients', include('apps.clients.urls')),
+    path('api/v1/clients/', include('apps.clients.urls')),
     path('api/v1/transfer/', include('apps.transfer.urls')),
     path('api/v1/suppliers/', include('apps.suppliers.urls')),
     path('api/v1/recycling/', include('apps.recycling.urls')),

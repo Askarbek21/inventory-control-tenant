@@ -46,7 +46,6 @@ class ProductSerializer(ModelSerializer):
         for mt in measurement_data:
             MeasurementProduct.objects.create(product=product, **mt)
         return product
-
     def update(self, instance, validated_data):
         measurement_data = validated_data.pop('measurementproduct_set')
 
@@ -59,6 +58,7 @@ class ProductSerializer(ModelSerializer):
 
             obj, created = MeasurementProduct.objects.get_or_create(measurement=measurement, product=instance,
                                                                     defaults={'number': number})
+
             if not created:
                 obj.number = number
                 obj.save()

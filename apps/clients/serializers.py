@@ -9,7 +9,7 @@ class ClientSerializer(serializers.ModelSerializer):
         fields = '__all__'
     
     def validate(self, attrs):
-        if attrs['type'] == 'Юр.лицо' and not attrs['ceo_name'] and not attrs['balance']:
+        if attrs.get('type') == 'Юр.лицо' and not attrs.get('ceo_name') and not attrs.get('balance'):
             raise serializers.ValidationError('Имя директора и баланс не могут быть пустыми')
         return attrs
     
