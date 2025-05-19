@@ -46,6 +46,24 @@ class ProductSerializer(ModelSerializer):
         for mt in measurement_data:
             MeasurementProduct.objects.create(product=product, **mt)
         return product
+    def update(self, instance, validated_data):
+        measurement_data = validated_data.pop('measurementproduct_set')
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        for item in measurement_data:
+            measurement = item['measurement']
+            number = item['number']
+
+            obj, created = MeasurementProduct.objects.get_or_create(measurement=measurement, product=instance,
+                                                                    defaults={'number': number})
+
+            if not created:
+                obj.number = number
+                obj.save()
+
+        return instance
 
 
 class StockSerializers(ModelSerializer):
