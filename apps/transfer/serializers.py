@@ -4,11 +4,14 @@ from rest_framework import serializers
 from .models import *
 from apps.items.serializers import StockSerializers
 from ..items.models import MeasurementProduct
+from ..stores.serializers import StoreSerializer
 
 
 class TransferSerializer(ModelSerializer):
-    from_stock = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all())
-    to_stock = serializers.PrimaryKeyRelatedField(queryset=Store.objects.all())
+    from_stock = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all(), write_only=True)
+    from_stock_read = StockSerializers(source='from_stock', read_only=True)
+    to_stock = serializers.PrimaryKeyRelatedField(queryset=Store.objects.all(), write_only=True)
+    to_stock_read = StoreSerializer(source='to_stock', read_only=True)
     comment = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
