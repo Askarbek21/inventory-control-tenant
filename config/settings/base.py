@@ -13,9 +13,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    #'rest_framework_roles',
+    'rest_framework_roles',
     'rest_framework_simplejwt',
     'corsheaders',
+    'django_filters',
     'apps.staff',
     'apps.stores',
     'apps.items',
@@ -26,9 +27,7 @@ INSTALLED_APPS = [
     'apps.admin',
     'apps.transfer',
     'apps.suppliers',
-    'django_filters',
     'apps.recycling',
-
 ]
 
 MIDDLEWARE = [

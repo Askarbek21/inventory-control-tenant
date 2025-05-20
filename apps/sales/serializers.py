@@ -2,6 +2,7 @@ from django.db import transaction
 from rest_framework import serializers
 
 from apps.debts.serializers import DebtInSaleSerializer, Debt
+from apps.stores.serializers import StoreSerializer
 from .models import *
 
 
@@ -25,13 +26,15 @@ class SaleItemSerializer(serializers.ModelSerializer):
 class SaleSerializer(serializers.ModelSerializer):
     sale_items = SaleItemSerializer(many=True, required=False)
     sale_debt = DebtInSaleSerializer(required=False, write_only=True)
+    store_read = StoreSerializer(read_only=True, source='store')
+    store_write = serializers.PrimaryKeyRelatedField(queryset=Store.objects.all(), write_only=True, source='store')
 
     class Meta:
         model = Sale 
         fields = [
-            'id', 'store', 'payment_method', 
+            'id', 'store_read', 'payment_method', 
             'on_credit', 'sale_items', 'sale_debt',
-            'total_amount'
+            'total_amount', 'store_write'
             ]
     
     def validate(self, attrs):

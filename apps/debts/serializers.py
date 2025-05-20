@@ -1,10 +1,17 @@
 from rest_framework import serializers
 
+from apps.sales.serializers import SaleSerializer
+from apps.clients.serializers import ClientSerializer
 from .models import *
 
 
 class DebtSerializer(serializers.ModelSerializer):
+    sale_read = SaleSerializer(read_only=True, source='sale')
+    sale_write = serializers.PrimaryKeyRelatedField(Sale.objects.all(), write_only=True, source='sale')
+    client_read = ClientSerializer(read_only=True, source='client')
+    client_write = serializers.PrimaryKeyRelatedField(Client.objects.all(), write_only=True, source='client')
     remainder = serializers.SerializerMethodField()
+    
     class Meta:
         model = Debt 
         fields = '__all__'
@@ -15,12 +22,13 @@ class DebtSerializer(serializers.ModelSerializer):
     
 
 class DebtPaymentSerializer(serializers.ModelSerializer):
+    
     class Meta:
         model = DebtPayment
         fields = '__all__'
     
     def validate(self, attrs):
-        debt = attrs['debt']
+        debt = attrs.get('debt')
 
         if debt.is_paid:
             raise serializers.ValidationError("Этот долг уже полностью погашен!")

@@ -2,6 +2,7 @@ from rest_framework import serializers
 from django.db import IntegrityError
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
+from apps.stores.serializers import StoreSerializer, Store
 from .models import *
 
 
@@ -38,6 +39,11 @@ class UserSerializer(serializers.Serializer):
     
 
 class StaffSerializer(serializers.ModelSerializer):
+    store_read = StoreSerializer(read_only=True, source='store')
+    store_write = serializers.PrimaryKeyRelatedField(queryset=Store.objects.all(), write_only=True, source='store')
+    user_read = UserSerializer(read_only=True, source='user')
+    user_write = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), write_only=True, source='user')
+    
     class Meta:
         model = Staff 
         fields = '__all__'

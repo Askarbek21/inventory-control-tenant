@@ -11,6 +11,10 @@ def owns_store(request, view):
     obj = view.get_object()
     return request.user == obj.owner
 
+def belongs_to_store(request, view):
+    obj = view.get_object()
+    return request.user == obj.store
+
 ROLES = {
     'admin': is_admin,
     'user': is_user,

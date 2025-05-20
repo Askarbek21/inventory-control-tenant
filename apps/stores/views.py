@@ -11,13 +11,14 @@ from .filters import StoreFilter
 class StoreViewset(viewsets.ModelViewSet):
     serializer_class = StoreSerializer
     queryset = Store.objects.all()
-    #view_permissions = {
-    #    'create': {'admin':True},
-    #    'list': {'admin':True},
-    #    'retrieve': {'admin':True, 'manager': allof(is_manager, owns_store)},
-    #    'update,partial_update': {'admin': True},
-    #    'destroy': {'admin':True}, 
-    #}
+    view_permissions = {
+        'options': {'admin':True},
+        'create': {'admin':True},
+        'list': {'admin':True},
+        'retrieve': {'admin':True, 'manager': allof(is_manager, owns_store)},
+        'update,partial_update': {'admin': True},
+        'destroy': {'admin':True}, 
+    }
     
     pagination_class = CustomPageNumberPagination
     filter_backends = (DjangoFilterBackend,)
