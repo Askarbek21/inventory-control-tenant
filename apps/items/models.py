@@ -48,6 +48,7 @@ class MeasurementProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     measurement = models.ForeignKey(Measurement, on_delete=models.CASCADE)
     number = models.FloatField(validators=[MinValueValidator(0.0)])
+    for_sale = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.measurement.measurement_name}'
@@ -93,4 +94,3 @@ class DeletedItems(models.Model):
         verbose_name_plural = "Deleted Items"
         ordering = ['-date_of_deleted']
         db_table = 'deleted_items'
-

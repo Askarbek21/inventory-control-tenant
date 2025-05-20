@@ -27,7 +27,7 @@ class MeasurementProductSerializers(ModelSerializer):
 
     class Meta:
         model = MeasurementProduct
-        fields = ['id', 'measurement_write', 'measurement_read', 'number']
+        fields = ['id', 'measurement_write', 'measurement_read', 'number', 'for_sale']
 
 
 class ProductSerializer(ModelSerializer):
@@ -38,7 +38,7 @@ class ProductSerializer(ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['id', 'product_name', 'category_write', 'category_read', 'measurement']
+        fields = ['id', 'product_name', 'category_write', 'category_read', 'measurement', ]
 
     def create(self, validated_data):
         measurement_data = validated_data.pop('measurementproduct_set')
@@ -56,11 +56,13 @@ class ProductSerializer(ModelSerializer):
         for item in measurement_data:
             measurement = item['measurement']
             number = item['number']
+            for_sale = item['for_sale']
 
             obj, created = MeasurementProduct.objects.get_or_create(measurement=measurement, product=instance,
-                                                                    defaults={'number': number})
+                                                                    defaults={'number': number, "for_sale": for_sale})
             if not created:
                 obj.number = number
+                obj.for_sale = for_sale
                 obj.save()
 
         return instance
