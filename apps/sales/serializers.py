@@ -3,24 +3,38 @@ from rest_framework import serializers
 
 from apps.debts.serializers import DebtInSaleSerializer, Debt
 from apps.stores.serializers import StoreSerializer
+from apps.items.serializers import StockSerializers, MeasurementProduct
 from .models import *
 
 
 class SaleItemSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
-    
+    stock_read = StockSerializers(read_only=True, source='stock')
+    stock_write = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all(), write_only=True, source='stock')
     class Meta:
         model = SaleItem
-        fields = ['id', 'stock', 'quantity', 'selling_method', 'subtotal']
+        fields = ['id', 'stock_read', 'stock_write','quantity', 'selling_method', 'subtotal']
     
     def validate(self, attrs):
         stock = attrs['stock']
         quantity = attrs['quantity']
+        selling_method = attrs['selling_method']
+        product = stock.product
+        product_measurement = MeasurementProduct.objects.get(product=product, for_sale=True)
 
-        if quantity < 0 or quantity > stock.quantity:
-            raise serializers.ValidationError('Неверное кол-во товара')
-        
-        return attrs 
+        if quantity < 0:
+            raise serializers.ValidationError('Количество не может быть отрицательным')
+
+        if selling_method == 'Ед.измерения':
+            product_measurement = MeasurementProduct.objects.get(product=product, for_sale=True)
+            if not product_measurement:
+                raise serializers.ValidationError('Измерение с for_sale=True не найдено для продукта')
+
+            if quantity > product_measurement.number:
+                raise serializers.ValidationError('Недостаточно измеренного товара')
+        else:
+            if quantity > stock.quantity:
+                raise serializers.ValidationError('Недостаточно товара на складе')
 
 
 class SaleSerializer(serializers.ModelSerializer):

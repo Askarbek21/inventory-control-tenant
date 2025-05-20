@@ -46,7 +46,11 @@ class StaffSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = Staff 
-        fields = '__all__'
+        fields = [
+            'id', 'store_read', 'store_write',
+            'user_read', 'user_write',
+            'is_active', 'date_joined'
+        ]
 
 
 #Token
