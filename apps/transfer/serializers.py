@@ -26,40 +26,25 @@ class TransferSerializer(ModelSerializer):
             raise ValidationError('Cannot transfer to the same store.')
         return attrs
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request and request.method == 'POST':
+            self.fields.pop('stock')
+
     def create(self, validated_data):
         from_stock = validated_data.pop('from_stock')
         to_stock = validated_data.pop('to_stock')
+
         amount = validated_data.pop('amount')
-        transfer = Transfer.objects.create(**validated_data,
-                                           amount=amount,
-                                           from_stock=from_stock,
-                                           to_stock=to_stock
-                                           )
+
         stock = Stock.objects.get(id=from_stock.id)
         stock.quantity -= amount
         stock.save()
-        try:
-            receiving_stock = Stock.objects.get(Q(store=to_stock.id) & Q(product=from_stock.product.id))
-            if receiving_stock.quantity == 0:
-                received_stock = Stock.objects.create(
-                    store=to_stock,
-                    quantity=amount,
-                    product=stock.product,
-                    purchase_price_in_us=stock.purchase_price_in_us,
-                    purchase_price_in_uz=stock.purchase_price_in_uz,
-                    selling_price=stock.selling_price,
-                    min_price=stock.min_price,
-                    exchange_rate=stock.exchange_rate,
-                    history_of_prices=stock.history_of_prices,
-                    color=stock.color,
-                    supplier=stock.supplier,
-                )
 
-                received_stock.save()
-            else:
-                receiving_stock.quantity += amount
-                receiving_stock.save()
-        except Stock.DoesNotExist:
+        receiving_stock = Stock.objects.filter(Q(store=to_stock.id) & Q(product=from_stock.product.id)).order_by(
+            '-id').first()
+        if receiving_stock is None or receiving_stock.quantity == 0:
             received_stock = Stock.objects.create(
                 store=to_stock,
                 quantity=amount,
@@ -75,5 +60,50 @@ class TransferSerializer(ModelSerializer):
             )
 
             received_stock.save()
+            transfer = Transfer.objects.create(**validated_data,
+                                               amount=amount,
+                                               from_stock=from_stock,
+                                               to_stock=to_stock,
+                                               stock=received_stock
+                                               )
+        else:
+            if receiving_stock.quantity != 0:
+                receiving_stock.quantity += amount
+            receiving_stock.save()
+            transfer = Transfer.objects.create(**validated_data,
+                                               amount=amount,
+                                               from_stock=from_stock,
+                                               to_stock=to_stock,
+                                               stock=receiving_stock
+                                               )
 
         return transfer
+
+    def update(self, instance, validated_data):
+
+        from_stock = instance.from_stock
+        print(from_stock)
+        stock = instance.stock
+        print(stock)
+        amount = validated_data.pop('amount')
+        print(amount)
+        sent_stock = Stock.objects.get(id=from_stock.id)
+
+        got_stock = Stock.objects.get(id=stock.id)
+        print(instance.amount)
+
+        if instance.amount > int(amount):
+            difference = instance.amount - int(amount)
+            sent_stock.quantity += difference
+            sent_stock.save()
+            got_stock.quantity = amount
+            got_stock.save()
+        elif instance.amount < int(amount):
+            difference = int(amount) - int(instance.amount)
+            sent_stock.quantity -= difference
+            sent_stock.save()
+            got_stock.quantity = amount
+            got_stock.save()
+        instance.amount = amount
+        instance.save()
+        return instance
