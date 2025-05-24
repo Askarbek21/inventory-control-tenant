@@ -4,11 +4,14 @@ from rest_framework import serializers
 from .models import *
 from apps.items.serializers import StockSerializers
 from ..items.models import MeasurementProduct
+from ..stores.serializers import StoreSerializer
 
 
 class TransferSerializer(ModelSerializer):
-    from_stock = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all())
-    to_stock = serializers.PrimaryKeyRelatedField(queryset=Store.objects.all())
+    from_stock = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all(), write_only=True)
+    from_stock_read = StockSerializers(source='from_stock', read_only=True)
+    to_stock = serializers.PrimaryKeyRelatedField(queryset=Store.objects.all(), write_only=True)
+    to_stock_read = StoreSerializer(source='to_stock', read_only=True)
     comment = serializers.CharField(required=False, allow_blank=True)
 
     class Meta:
@@ -35,15 +38,15 @@ class TransferSerializer(ModelSerializer):
     def create(self, validated_data):
         from_stock = validated_data.pop('from_stock')
         to_stock = validated_data.pop('to_stock')
-
         amount = validated_data.pop('amount')
 
         stock = Stock.objects.get(id=from_stock.id)
-        stock.quantity -= amount
+        stock.quantity -= float(amount)
         stock.save()
 
         receiving_stock = Stock.objects.filter(Q(store=to_stock.id) & Q(product=from_stock.product.id)).order_by(
             '-id').first()
+
         if receiving_stock is None or receiving_stock.quantity == 0:
             received_stock = Stock.objects.create(
                 store=to_stock,
@@ -58,52 +61,41 @@ class TransferSerializer(ModelSerializer):
                 color=stock.color,
                 supplier=stock.supplier,
             )
-
-            received_stock.save()
             transfer = Transfer.objects.create(**validated_data,
                                                amount=amount,
                                                from_stock=from_stock,
                                                to_stock=to_stock,
-                                               stock=received_stock
-                                               )
+                                               stock=received_stock)
         else:
-            if receiving_stock.quantity != 0:
-                receiving_stock.quantity += amount
+            receiving_stock.quantity += amount
             receiving_stock.save()
             transfer = Transfer.objects.create(**validated_data,
                                                amount=amount,
                                                from_stock=from_stock,
                                                to_stock=to_stock,
-                                               stock=receiving_stock
-                                               )
+                                               stock=receiving_stock)
 
         return transfer
 
     def update(self, instance, validated_data):
-
         from_stock = instance.from_stock
-        print(from_stock)
         stock = instance.stock
-        print(stock)
-        amount = validated_data.pop('amount')
-        print(amount)
+        new_amount = validated_data.pop('amount')
         sent_stock = Stock.objects.get(id=from_stock.id)
-
         got_stock = Stock.objects.get(id=stock.id)
-        print(instance.amount)
 
-        if instance.amount > int(amount):
-            difference = instance.amount - int(amount)
+        if instance.amount > new_amount:
+            difference = instance.amount - new_amount
             sent_stock.quantity += difference
-            sent_stock.save()
-            got_stock.quantity = amount
-            got_stock.save()
-        elif instance.amount < int(amount):
-            difference = int(amount) - int(instance.amount)
-            sent_stock.quantity -= difference
-            sent_stock.save()
-            got_stock.quantity = amount
-            got_stock.save()
-        instance.amount = amount
+            got_stock.quantity = new_amount
+        elif instance.amount < new_amount:
+            difference = new_amount - instance.amount
+            sent_stock.quantity -= float(difference)
+            got_stock.quantity = new_amount
+
+        sent_stock.save()
+        got_stock.save()
+
+        instance.amount = new_amount
         instance.save()
         return instance

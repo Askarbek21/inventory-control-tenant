@@ -11,7 +11,7 @@ class Transfer(models.Model):
     from_stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='from_stock')
     to_stock = models.ForeignKey(Store, on_delete=models.CASCADE)
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE, null=True, blank=True, related_name='stock')
-    amount = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0.0)])
+    amount = models.DecimalField(max_digits=20, decimal_places=2, validators=[MinValueValidator(0.0)])
     date_of_transfer = models.DateTimeField(default=timezone.now)
     comment = models.TextField(null=True, blank=True)
 

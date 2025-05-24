@@ -1,3 +1,4 @@
+from django.core.validators import MinValueValidator
 from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 
@@ -18,8 +19,9 @@ class RecyclingSerializer(ModelSerializer):
     min_price = serializers.DecimalField(required=False, max_digits=10, decimal_places=2)
     color = serializers.CharField(required=False)
     store = serializers.PrimaryKeyRelatedField(queryset=Store.objects.all(), write_only=True)
-    spent_amount = serializers.CharField()
-    get_amount = serializers.CharField()
+    spent_amount = serializers.FloatField(validators=[MinValueValidator(0)]
+                                          )
+    get_amount = serializers.FloatField(validators=[MinValueValidator(0)])
     to_stock = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all(), required=False)
 
     class Meta:
@@ -48,11 +50,12 @@ class RecyclingSerializer(ModelSerializer):
         store = validated_data.pop('store')
 
         stock = Stock.objects.get(id=from_to.id)
-        if int(spent_amount) > int(stock.quantity):
+        if spent_amount > stock.quantity:
             raise serializers.ValidationError('spent amount exceeds stock quantity')
         else:
-            stock.quantity -= int(spent_amount)
+            stock.quantity -= spent_amount
         stock.save()
+
         history = {
             "purchase_price_in_us": purchase_price_in_us,
             "purchase_price_in_uz": purchase_price_in_uz,
@@ -61,6 +64,7 @@ class RecyclingSerializer(ModelSerializer):
             "min_price": min_price,
             "color": color,
         }
+
         recycled_product_in_stock = Stock.objects.create(
             product=to_product,
             purchase_price_in_us=purchase_price_in_us,
@@ -73,6 +77,7 @@ class RecyclingSerializer(ModelSerializer):
             quantity=get_amount,
             store=store
         )
+
         recycled_product = Recycling.objects.create(
             from_to=from_to,
             to_product=to_product,
@@ -87,24 +92,26 @@ class RecyclingSerializer(ModelSerializer):
         from_to = validated_data.pop('from_to')
         to_stock = validated_data.pop('to_stock')
         spent_amount = validated_data.pop('spent_amount', instance.spent_amount)
-        update_from_stock = Stock.objects.get(id=from_to.id)
-        if int(spent_amount) > int(update_from_stock.quantity):
-            raise serializers.ValidationError('spent amount exceeds stock quantity')
-        elif int(spent_amount) > int(instance.spent_amount):
-            difference = int(spent_amount) - int(instance.spent_amount)
-            update_from_stock = Stock.objects.get(id=from_to.id)
-            update_from_stock.quantity -= int(difference)
-            update_from_stock.save()
 
-        elif int(spent_amount) < int(instance.spent_amount):
-            difference = int(instance.spent_amount) - int(spent_amount)
-            update_from_stock = Stock.objects.get(id=from_to.id)
-            update_from_stock.quantity += int(difference)
+        update_from_stock = Stock.objects.get(id=from_to.id)
+
+        if spent_amount > update_from_stock.quantity:
+            raise serializers.ValidationError('spent amount exceeds stock quantity')
+        elif spent_amount > instance.spent_amount:
+            difference = spent_amount - instance.spent_amount
+            update_from_stock.quantity -= difference
+            update_from_stock.save()
+        elif spent_amount < instance.spent_amount:
+            difference = instance.spent_amount - spent_amount
+            update_from_stock.quantity += difference
             update_from_stock.save()
 
         update_to_stock = Stock.objects.get(id=to_stock.id)
         update_to_stock.quantity = validated_data.get('get_amount', instance.get_amount)
+        update_to_stock.save()
+
         instance.spent_amount = spent_amount
         instance.get_amount = validated_data.get('get_amount', instance.get_amount)
         instance.save()
+
         return instance
