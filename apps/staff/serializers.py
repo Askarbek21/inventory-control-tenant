@@ -49,7 +49,7 @@ class StaffSerializer(serializers.ModelSerializer):
         model = Staff 
         fields = [
             'id', 'store_read', 'store_write',
-            'user_read', 'user_write',
+            'user_read', 'user_write', 'user_id',
             'is_active', 'date_joined'
         ]
     

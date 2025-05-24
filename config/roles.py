@@ -1,4 +1,4 @@
-from rest_framework_roles.roles import is_user, is_anon, is_admin
+#from rest_framework_roles.roles import is_user, is_anon, is_admin
 
 
 def is_seller(request, view):
@@ -16,9 +16,9 @@ def belongs_to_store(request, view):
     return request.user == obj.store
 
 ROLES = {
-    'admin': is_admin,
-    'user': is_user,
-    'anon': is_anon,
+#    'admin': is_admin,
+ #   'user': is_user,
+ #   'anon': is_anon,
     'manager': is_manager,
     'seller': is_seller,
 }
