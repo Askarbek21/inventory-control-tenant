@@ -9,9 +9,9 @@ class Recycling(models.Model):
     to_stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='recycled_to', null=True, blank=True, )
     to_product = models.ForeignKey(Product, on_delete=models.CASCADE)
     date_of_recycle = models.DateField(auto_now=True)
-    spent_amount = models.PositiveIntegerField(default=0)
+    spent_amount = models.FloatField(default=0)
 
-    get_amount = models.PositiveIntegerField(default=0, null=True, blank=True)
+    get_amount = models.FloatField(default=0, null=True, blank=True)
 
     class Meta:
         db_table = 'recycling'

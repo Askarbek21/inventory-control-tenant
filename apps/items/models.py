@@ -47,7 +47,7 @@ class Product(models.Model):
 class MeasurementProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     measurement = models.ForeignKey(Measurement, on_delete=models.CASCADE)
-    number = models.FloatField(validators=[MinValueValidator(0.0)])
+    number = models.CharField(max_length=254, null=True, blank=True)
     for_sale = models.BooleanField(default=False)
 
     def __str__(self):
@@ -63,12 +63,12 @@ class Stock(models.Model):
 
     date_of_arrived = models.DateTimeField(auto_now_add=True)
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
-    quantity = models.PositiveIntegerField()
-    purchase_price_in_us = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    purchase_price_in_uz = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    exchange_rate = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    selling_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
-    min_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    quantity = models.FloatField()
+    purchase_price_in_us = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
+    purchase_price_in_uz = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
+    exchange_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
+    selling_price = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
+    min_price = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
     history_of_prices = models.JSONField(default=dict)
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, null=True, blank=True)
     color = models.CharField(max_length=199, null=True, blank=True)

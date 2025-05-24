@@ -81,7 +81,7 @@ class StockSerializers(ModelSerializer):
     supplier_write = serializers.PrimaryKeyRelatedField(queryset=Supplier.objects.all(), write_only=True,
                                                         source='supplier')
 
-    quantity = serializers.IntegerField(required=False)
+    quantity = serializers.FloatField(required=False)
     purchase_price_in_us = serializers.FloatField(required=False)
     purchase_price_in_uz = serializers.FloatField(required=False)
     exchange_rate = serializers.FloatField(required=False)
@@ -109,29 +109,33 @@ class StockSerializers(ModelSerializer):
 
         history = {
             "purchase_price_in_us": purchase_price_in_us,
-            'purchase_price_in_uz': purchase_price_in_uz,
+            "purchase_price_in_uz": purchase_price_in_uz,
             "selling_price": selling_price,
             "min_price": min_price,
             "exchange_rate": exchange_rate,
-            'quantity': quantity,
-
+            "quantity": quantity,
         }
-        stock = Stock.objects.create(**validated_data, history_of_prices=history,
-                                     selling_price=selling_price,
-                                     min_price=min_price,
-                                     purchase_price_in_us=purchase_price_in_us,
-                                     purchase_price_in_uz=purchase_price_in_uz,
-                                     exchange_rate=exchange_rate, quantity=quantity)
+
+        stock = Stock.objects.create(
+            **validated_data,
+            history_of_prices=history,
+            selling_price=selling_price,
+            min_price=min_price,
+            purchase_price_in_us=purchase_price_in_us,
+            purchase_price_in_uz=purchase_price_in_uz,
+            exchange_rate=exchange_rate,
+            quantity=quantity
+        )
 
         return stock
 
     def update(self, instance, validated_data):
-        selling_price = float(validated_data.pop('selling_price'))
-        min_price = float(validated_data.pop('min_price'))
-        exchange_rate = float(validated_data.pop('exchange_rate'))
-        purchase_price_in_us = float(validated_data.pop('purchase_price_in_us'))
-        purchase_price_in_uz = float(validated_data.pop('purchase_price_in_uz'))
-        quantity = float(validated_data.pop('quantity'))
+        selling_price = float(validated_data.pop('selling_price', instance.selling_price))
+        min_price = float(validated_data.pop('min_price', instance.min_price))
+        exchange_rate = float(validated_data.pop('exchange_rate', instance.exchange_rate))
+        purchase_price_in_us = float(validated_data.pop('purchase_price_in_us', instance.purchase_price_in_us))
+        purchase_price_in_uz = float(validated_data.pop('purchase_price_in_uz', instance.purchase_price_in_uz))
+        quantity = float(validated_data.pop('quantity', instance.quantity))
 
         instance.selling_price = selling_price
         instance.min_price = min_price
@@ -147,7 +151,6 @@ class StockSerializers(ModelSerializer):
             "min_price": min_price,
             "exchange_rate": exchange_rate,
             "quantity": quantity,
-
         }
         instance.history_of_prices = history
 
@@ -155,5 +158,4 @@ class StockSerializers(ModelSerializer):
             setattr(instance, attr, value)
 
         instance.save()
-
         return instance
