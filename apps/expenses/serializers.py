@@ -20,7 +20,7 @@ class CashInFlowNameSerializer(serializers.ModelSerializer):
 class ExpenseSerializer(serializers.ModelSerializer):
     store = serializers.PrimaryKeyRelatedField(queryset=Store.objects.all(), write_only=True)
     expense_name = serializers.PrimaryKeyRelatedField(queryset=ExpenseName.objects.all(), write_only=True)
-    amount = serializers.DecimalField(max_digits=10, decimal_places=2)
+    amount = serializers.DecimalField(max_digits=20, decimal_places=2)
     # user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     history = serializers.JSONField(default=dict, read_only=True)
 
@@ -72,7 +72,6 @@ class ExpenseSerializer(serializers.ModelSerializer):
         history[f'comment'] = f'{amount} - {comment}'
         expense_store = Store.objects.get(pk=instance.store.pk)
 
-
         if instance.amount > amount:
 
             difference = int(instance.amount) - int(amount)
@@ -92,5 +91,12 @@ class ExpenseSerializer(serializers.ModelSerializer):
 
 
 class CashInFlowSerializer(serializers.ModelSerializer):
+    store = serializers.PrimaryKeyRelatedField(queryset=Store.objects.all(), write_only=True)
+
+    amount = serializers.DecimalField(max_digits=20, decimal_places=2)
+    cash_inflow_name = serializers.PrimaryKeyRelatedField(queryset=CashInFlowName.objects.all(), write_only=True)
+    comment = serializers.CharField()
+    history = serializers.JSONField(default=dict, read_only=True)
+
     class Meta:
         model = CashInFlow
