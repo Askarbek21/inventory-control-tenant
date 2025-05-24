@@ -18,7 +18,13 @@ class TransferSerializer(ModelSerializer):
 
     class Meta:
         model = Transfer
-        fields = '__all__'
+        fields = ["from_stock",
+                  "to_stock",
+                  "stock",
+                  "amount",
+                  "date_of_transfer",
+                  "comment", "to_stock_read", "from_stock_read"
+                  ]
 
     def validate(self, attrs):
         from_stock = attrs['from_stock']
