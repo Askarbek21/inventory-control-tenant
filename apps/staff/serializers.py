@@ -42,8 +42,8 @@ class StaffSerializer(serializers.ModelSerializer):
     store_read = StoreSerializer(read_only=True, source='store')
     store_write = serializers.PrimaryKeyRelatedField(queryset=Store.objects.all(), write_only=True, source='store')
     user_read = UserSerializer(read_only=True, source='user')
-    user_write = UserSerializer(required=False, source='user')
-    user_id = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False)
+    user_write = UserSerializer(required=False)
+    user_id = serializers.PrimaryKeyRelatedField(queryset=CustomUser.objects.all(), required=False, source='user')
     
     class Meta:
         model = Staff 

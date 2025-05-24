@@ -19,8 +19,9 @@ def deduct_stock(instance):
             stock.quantity -= item.quantity
             stock.save(update_fields=['quantity'])
         else:
-            product_measurement = MeasurementProduct.objects.get(product=product, for_sale=True)
-            product_measurement.number -= item.quantity
-            product_measurement.save(update_fields=['number'])
+            product_measurement = MeasurementProduct.objects.filter(product=product, for_sale=True).first()
+	    if product_measurement:
+                product_measurement.number -= item.quantity
+                product_measurement.save(update_fields=['number'])
 
 

@@ -21,13 +21,12 @@ class SaleItemSerializer(serializers.ModelSerializer):
         quantity = attrs['quantity']
         selling_method = attrs['selling_method']
         product = stock.product
-        product_measurement = MeasurementProduct.objects.get(product=product, for_sale=True)
 
         if quantity < 0:
             raise serializers.ValidationError('Количество не может быть отрицательным')
 
         if selling_method == 'Ед.измерения':
-            product_measurement = MeasurementProduct.objects.get(product=product, for_sale=True)
+            product_measurement = MeasurementProduct.objects.filter(product=product, for_sale=True).first()
             if not product_measurement:
                 raise serializers.ValidationError('Измерение с for_sale=True не найдено для продукта')
 
