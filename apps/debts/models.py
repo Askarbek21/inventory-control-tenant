@@ -1,5 +1,6 @@
 from django.db import models
 
+from config.constants import PAYMENT_METHOD_CHOICES
 from apps.sales.models import Sale 
 from apps.clients.models import Client
 
@@ -25,6 +26,7 @@ class Debt(models.Model):
 class DebtPayment(models.Model):
     debt = models.ForeignKey(Debt, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=10, decimal_places=2)
+    payment_method = models.CharField(max_length=14, choices=PAYMENT_METHOD_CHOICES)
     paid_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -33,5 +35,5 @@ class DebtPayment(models.Model):
         verbose_name_plural = 'Debt Payments'
     
     def __str__(self):
-        return f'{self.debt.customer_name} заплатил {self.amount} в {self.paid_at} '
+        return f'{self.debt.client.name} заплатил {self.amount} в {self.paid_at} '
 

@@ -11,6 +11,7 @@ class SaleItemSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField(required=False)
     stock_read = StockSerializers(read_only=True, source='stock')
     stock_write = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all(), write_only=True, source='stock')
+    
     class Meta:
         model = SaleItem
         fields = ['id', 'stock_read', 'stock_write','quantity', 'selling_method', 'subtotal']
@@ -80,7 +81,7 @@ class SaleSerializer(serializers.ModelSerializer):
                 stock = item['stock']
                 quantity = item['quantity']
                 unit_price = stock.selling_price
-                subtotal = quantity * unit_price
+                subtotal = item.get('subtotal', quantity*unit_price)
 
                 item_instances.append(SaleItem(
                     sale=new_sale,
@@ -101,15 +102,17 @@ class SaleSerializer(serializers.ModelSerializer):
         return new_sale
 
     def update(self, instance, validated_data):
-        on_credit = validated_data.pop('on_credit')
-        sale_items = validated_data.pop('sale_items', None)
-        sale_debt = validated_data.pop('sale_debt', None)
+        validated_data.pop('on_credit', None)
+        validated_data.pop('sale_items', None)
+        validated_data.pop('sale_debt', None)
 
         for field,value in validated_data.items():
             if value is not None:
                 setattr(instance, field, value)
 
         instance.save()
+
+        return instance
 
         
 

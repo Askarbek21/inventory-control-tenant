@@ -1,11 +1,13 @@
 from rest_framework import viewsets
 
 from .serializers import *
+from .filters import SaleFilter
 
 
 class SaleViewset(viewsets.ModelViewSet):
     queryset = Sale.objects.all()
     serializer_class = SaleSerializer
+    filterset_class = SaleFilter
     #view_permissions = {
     #    'options': {'admin':True},
     #    'create': {'admin':True, 'seller':True, 'manager':True},
