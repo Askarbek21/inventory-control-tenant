@@ -25,8 +25,8 @@ class ExpenseSerializer(serializers.ModelSerializer):
     # user = serializers.HiddenField(default=serializers.CurrentUserDefault())
     history = serializers.JSONField(default=dict, read_only=True)
 
-    store_read = StoreSerializer(read_only=True)
-    expense_name_read = ExpenseNameSerializer(read_only=True)
+    store_read = StoreSerializer(read_only=True, source='store')
+    expense_name_read = ExpenseNameSerializer(read_only=True, source='expense_name')
 
     class Meta:
         model = Expense
