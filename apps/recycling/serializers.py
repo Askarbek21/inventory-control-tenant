@@ -3,14 +3,15 @@ from rest_framework.serializers import ModelSerializer
 from rest_framework import serializers
 
 from apps.items.models import Stock, Product
+from apps.items.serializers import StockSerializers, ProductSerializer
 from apps.recycling.models import Recycling
 
 from apps.stores.models import Store
 
 
 class RecyclingSerializer(ModelSerializer):
-    from_to = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all())
-    to_product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
+    from_to = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all(), write_only=True)
+    to_product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all(), write_only=True)
 
     purchase_price_in_us = serializers.DecimalField(required=False, max_digits=10, decimal_places=2)
     purchase_price_in_uz = serializers.DecimalField(required=False, max_digits=10, decimal_places=2)
@@ -22,7 +23,11 @@ class RecyclingSerializer(ModelSerializer):
     spent_amount = serializers.FloatField(validators=[MinValueValidator(0)]
                                           )
     get_amount = serializers.FloatField(validators=[MinValueValidator(0)])
-    to_stock = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all(), required=False)
+    to_stock = serializers.PrimaryKeyRelatedField(queryset=Stock.objects.all(), required=False, write_only=True)
+
+    from_to_read = StockSerializers(source='from_to', read_only=True)
+    to_product_read = ProductSerializer(source='to_product', read_only=True)
+    to_stock_read = StockSerializers(source='to_stock', read_only=True)
 
     class Meta:
         model = Recycling
