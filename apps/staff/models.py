@@ -36,7 +36,7 @@ class CustomUser(AbstractUser):
 
 class Staff(models.Model):
     store = models.ForeignKey('stores.Store', on_delete=models.CASCADE, related_name='store_staff')
-    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE)
+    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, null=True)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True)
 

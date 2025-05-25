@@ -35,6 +35,7 @@ class SaleItemSerializer(serializers.ModelSerializer):
         else:
             if quantity > stock.quantity:
                 raise serializers.ValidationError('Недостаточно товара на складе')
+        return attrs
 
 
 class SaleSerializer(serializers.ModelSerializer):
