@@ -45,8 +45,8 @@ class CashInFlow(models.Model):
     cash_inflow_name = models.ForeignKey(CashInFlowName, on_delete=models.SET_NULL,
                                          null=True)
     comment = models.CharField(max_length=254, null=True, blank=True)
-    user = models.CharField(max_length=254)
-    history = models.JSONField(default=dict)
+    user = models.CharField(max_length=254, null=True, blank=True)
+    history = models.JSONField(default=dict, null=True, blank=True)
     date = models.DateTimeField(auto_now_add=True)
 
     class Meta:
