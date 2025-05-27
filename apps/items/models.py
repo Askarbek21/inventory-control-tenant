@@ -71,6 +71,7 @@ class Stock(models.Model):
     min_price = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
     history_of_prices = models.JSONField(default=dict)
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, null=True, blank=True)
+    has_color = models.BooleanField(default=False)
     color = models.CharField(max_length=199, null=True, blank=True)
 
     def __str__(self):
