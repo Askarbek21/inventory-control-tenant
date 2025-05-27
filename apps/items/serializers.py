@@ -96,7 +96,7 @@ class StockSerializers(ModelSerializer):
                   'purchase_price_in_us',
                   'selling_price',
                   'min_price', "exchange_rate", 'quantity', 'history_of_prices', 'color',
-                  'supplier_read', 'supplier_write',
+                  'supplier_read', 'supplier_write', 'has_color', 'date_of_arrived'
                   ]
 
     def create(self, validated_data):
