@@ -34,6 +34,8 @@ class Product(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     measurement = models.ManyToManyField(Measurement, through='MeasurementProduct',
                                          related_name='measurements')
+    has_color = models.BooleanField(default=False)
+    color = models.CharField(max_length=199, null=True, blank=True)
 
     def __str__(self):
         return self.product_name
@@ -71,8 +73,6 @@ class Stock(models.Model):
     min_price = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
     history_of_prices = models.JSONField(default=dict)
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, null=True, blank=True)
-    has_color = models.BooleanField(default=False)
-    color = models.CharField(max_length=199, null=True, blank=True)
 
     def __str__(self):
         return f'{self.product.product_name} -- {self.store.name}'
