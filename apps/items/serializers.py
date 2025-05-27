@@ -38,7 +38,7 @@ class ProductSerializer(ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['id', 'product_name', 'category_write', 'category_read', 'measurement', ]
+        fields = ['id', 'product_name', 'category_write', 'category_read', 'measurement', 'color', 'has_color']
 
     def create(self, validated_data):
         measurement_data = validated_data.pop('measurementproduct_set')
@@ -87,7 +87,6 @@ class StockSerializers(ModelSerializer):
     exchange_rate = serializers.FloatField(required=False)
     selling_price = serializers.FloatField(required=False)
     min_price = serializers.FloatField(required=False)
-    color = serializers.CharField(required=False)
 
     class Meta:
         model = Stock
@@ -95,8 +94,8 @@ class StockSerializers(ModelSerializer):
                   'product_write', 'store_write', 'store_read', "product_read", 'purchase_price_in_uz',
                   'purchase_price_in_us',
                   'selling_price',
-                  'min_price', "exchange_rate", 'quantity', 'history_of_prices', 'color',
-                  'supplier_read', 'supplier_write', 'has_color', 'date_of_arrived'
+                  'min_price', "exchange_rate", 'quantity', 'history_of_prices',
+                  'supplier_read', 'supplier_write', 'date_of_arrived'
                   ]
 
     def create(self, validated_data):
