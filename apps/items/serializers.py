@@ -144,15 +144,7 @@ class StockSerializers(ModelSerializer):
         instance.purchase_price_in_uz = purchase_price_in_uz
         instance.quantity = quantity
 
-        history = {
-            "purchase_price_in_us": purchase_price_in_us,
-            "purchase_price_in_uz": purchase_price_in_uz,
-            "selling_price": selling_price,
-            "min_price": min_price,
-            "exchange_rate": exchange_rate,
-            "quantity": quantity,
-        }
-        instance.history_of_prices = history
+
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
