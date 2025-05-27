@@ -18,7 +18,7 @@ class RecyclingSerializer(ModelSerializer):
     exchange_rate = serializers.DecimalField(required=False, max_digits=10, decimal_places=2)
     selling_price = serializers.DecimalField(required=False, max_digits=10, decimal_places=2)
     min_price = serializers.DecimalField(required=False, max_digits=10, decimal_places=2)
-    color = serializers.CharField(required=False)
+
     store = serializers.PrimaryKeyRelatedField(queryset=Store.objects.all(), write_only=True)
     spent_amount = serializers.FloatField(validators=[MinValueValidator(0)]
                                           )
@@ -51,7 +51,7 @@ class RecyclingSerializer(ModelSerializer):
         exchange_rate = float(validated_data.pop('exchange_rate', 0))
         selling_price = float(validated_data.pop('selling_price', 0))
         min_price = float(validated_data.pop('min_price', 0))
-        color = validated_data.pop('color', '')
+
         store = validated_data.pop('store')
 
         stock = Stock.objects.get(id=from_to.id)
@@ -67,7 +67,7 @@ class RecyclingSerializer(ModelSerializer):
             "exchange_rate": exchange_rate,
             "selling_price": selling_price,
             "min_price": min_price,
-            "color": color,
+
         }
 
         recycled_product_in_stock = Stock.objects.create(
@@ -77,7 +77,7 @@ class RecyclingSerializer(ModelSerializer):
             exchange_rate=exchange_rate,
             selling_price=selling_price,
             min_price=min_price,
-            color=color,
+
             history_of_prices=history,
             quantity=get_amount,
             store=store
