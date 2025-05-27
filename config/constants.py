@@ -8,7 +8,6 @@ PAYMENT_METHOD_CHOICES = {
         'Наличные': 'Наличные',
         'Карта': 'Карта',
         'Click': 'Click',
-        'Сложная оплата': 'Сложная оплата',
     }
 
 SELLING_METHOD_CHOICES = {

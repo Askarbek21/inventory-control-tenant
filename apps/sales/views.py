@@ -20,3 +20,11 @@ class SaleViewset(viewsets.ModelViewSet):
     def get_serializer_context(self):
         context = {'request': self.request}
         return context
+
+
+class SalePaymentViewset(viewsets.ModelViewSet):
+    serializer_class = SalePaymentSerializer
+
+    def get_queryset(self):
+        qs = SalePayment.objects.filter(sale=self.kwargs['sale_pk'])
+        return qs

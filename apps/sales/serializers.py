@@ -38,18 +38,52 @@ class SaleItemSerializer(serializers.ModelSerializer):
         return attrs
 
 
+class SalePaymentSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = SalePayment
+        fields = '__all__'
+    
+    def validate(self, attrs):
+        sale = attrs.get('sale')
+
+        if sale.is_paid:
+            raise serializers.ValidationError("Эта продажа уже полностью оплачена!")
+
+        return attrs
+
+    def create(self, validated_data):
+        sale = validated_data.get('sale')
+
+        new_payment = super().create(validated_data)
+        
+        total_paid = sale.sale_payments.aggregate(total=models.Sum('amount'))['total'] or 0
+        
+        if total_paid >= sale.total_amount:
+            sale.is_paid = True
+            sale.save(update_fields=['is_paid'])
+
+        return new_payment
+    
+    def update(self, instance, validated_data):
+        validated_data.pop('sale')
+        validated_data.pop('amount')
+        return super().update(instance, validated_data)
+    
+
 class SaleSerializer(serializers.ModelSerializer):
     sale_items = SaleItemSerializer(many=True, required=False)
     sale_debt = DebtInSaleSerializer(required=False, write_only=True)
     store_read = StoreSerializer(read_only=True, source='store')
     store_write = serializers.PrimaryKeyRelatedField(queryset=Store.objects.all(), write_only=True, source='store')
+    sale_payments = SalePaymentSerializer(many=True, required=False)
 
     class Meta:
         model = Sale 
         fields = [
-            'id', 'store_read', 'payment_method', 
+            'id', 'store_read', 'is_paid',
             'on_credit', 'sale_items', 'sale_debt',
-            'total_amount', 'store_write'
+            'total_amount', 'store_write', 'sale_payments',
             ]
     
     def validate(self, attrs):

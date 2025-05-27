@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'apps.transfer',
     'apps.suppliers',
     'apps.recycling',
+    'apps.expenses',
 ]
 
 MIDDLEWARE = [

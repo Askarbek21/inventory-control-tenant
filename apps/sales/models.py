@@ -9,10 +9,10 @@ from config.constants import PAYMENT_METHOD_CHOICES, SELLING_METHOD_CHOICES
 class Sale(models.Model):
     store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='store_sales')
     sold_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True)
-    payment_method = models.CharField(max_length=14, choices=PAYMENT_METHOD_CHOICES, default='Наличные')
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     on_credit = models.BooleanField(default=False)
     sold_date = models.DateTimeField(auto_now_add=True)
+    is_paid = models.BooleanField(default=False)
     
     class Meta:
         db_table = 'sales'
@@ -40,4 +40,14 @@ class SaleItem(models.Model):
     def __str__(self):
         return f'{self.product} - {self.quantity}'
     
-    
+
+class SalePayment(models.Model):
+    sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name='sale_payments')
+    payment_method = models.CharField(max_length=8, choices=PAYMENT_METHOD_CHOICES)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    paid_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'sale_payments'
+        verbose_name_plural = 'Sale Payments'
+        ordering = ['-paid_at']
