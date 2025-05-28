@@ -1,6 +1,7 @@
 from django.db import models
 
 from apps.stores.models import Store
+from config import constants
 
 
 # Create your models here.
@@ -31,6 +32,7 @@ class Expense(models.Model):
     expense_name = models.ForeignKey(ExpenseName, on_delete=models.SET_NULL, null=True)
     amount = models.DecimalField(decimal_places=2, max_digits=20)
     comment = models.CharField(max_length=254, null=True, blank=True)
+    payment_type = models.CharField(max_length=254, null=True, blank=True, choices=constants.PAYMENT_METHOD_CHOICES)
     user = models.CharField(max_length=254, null=True, blank=True)
     history = models.JSONField(default=dict)
     date = models.DateTimeField(auto_now_add=True)
