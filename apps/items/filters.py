@@ -23,8 +23,9 @@ class ProductFilter(filters.FilterSet):
 
     class Meta:
         model = Product
-        fields = '__all__'
-
+        fields = [
+            "color","category","product_name"
+        ]
 
 class StockFilter(filters.FilterSet):
     date_of_arrived_gte = filters.DateFilter(

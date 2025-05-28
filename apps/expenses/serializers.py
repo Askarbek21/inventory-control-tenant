@@ -37,7 +37,7 @@ class ExpenseSerializer(serializers.ModelSerializer):
                   "history",
                   "store_read",
                   "expense_name_read",
-                  'comment',"payment_type"]
+                  'comment', "payment_type", 'date']
 
     def create(self, validated_data):
         # user = validated_data.pop('user')
@@ -109,7 +109,7 @@ class CashInFlowSerializer(serializers.ModelSerializer):
                   "comment",
                   "history",
                   "store_read",
-                  "cash_inflow_read", ]
+                  "cash_inflow_read", 'date']
 
     def create(self, validated_data):
         store = validated_data.pop('store')
