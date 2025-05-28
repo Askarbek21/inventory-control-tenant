@@ -4,7 +4,7 @@ from .serializers import *
 
 
 class DebtViewset(viewsets.ModelViewSet):
-    queryset = Debt.objects.all()
+    queryset = Debt.objects.select_related('client')
     serializer_class = DebtSerializer
 
 

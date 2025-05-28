@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Client
+from .models import Client, BalanceHistory
 
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -21,3 +21,10 @@ class ClientSerializer(serializers.ModelSerializer):
             repr.pop('balance')
 
         return repr
+
+
+class BalanceHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        depth = 1
+        model = BalanceHistory
+        fields = ['sale', 'previous_balance', 'new_balance', 'amount_deducted', 'timestamp']

@@ -5,6 +5,7 @@ from apps.debts.serializers import DebtInSaleSerializer, Debt
 from apps.stores.serializers import StoreSerializer
 from apps.items.serializers import StockSerializers, MeasurementProduct
 from .models import *
+from .services import process_sale
 
 
 class SaleItemSerializer(serializers.ModelSerializer):
@@ -39,72 +40,56 @@ class SaleItemSerializer(serializers.ModelSerializer):
 
 
 class SalePaymentSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = SalePayment
-        fields = '__all__'
-    
-    def validate(self, attrs):
-        sale = attrs.get('sale')
-
-        if sale.is_paid:
-            raise serializers.ValidationError("Эта продажа уже полностью оплачена!")
-
-        return attrs
-
-    def create(self, validated_data):
-        sale = validated_data.get('sale')
-
-        new_payment = super().create(validated_data)
-        
-        total_paid = sale.sale_payments.aggregate(total=models.Sum('amount'))['total'] or 0
-        
-        if total_paid >= sale.total_amount:
-            sale.is_paid = True
-            sale.save(update_fields=['is_paid'])
-
-        return new_payment
-    
-    def update(self, instance, validated_data):
-        validated_data.pop('sale')
-        validated_data.pop('amount')
-        return super().update(instance, validated_data)
-    
+        fields = ['amount', 'payment_method']
+      
 
 class SaleSerializer(serializers.ModelSerializer):
     sale_items = SaleItemSerializer(many=True, required=False)
     sale_debt = DebtInSaleSerializer(required=False, write_only=True)
     store_read = StoreSerializer(read_only=True, source='store')
-    store_write = serializers.PrimaryKeyRelatedField(queryset=Store.objects.all(), write_only=True, source='store')
     sale_payments = SalePaymentSerializer(many=True, required=False)
 
     class Meta:
         model = Sale 
         fields = [
-            'id', 'store_read', 'is_paid',
+            'id', 'store_read', 'client',
             'on_credit', 'sale_items', 'sale_debt',
-            'total_amount', 'store_write', 'sale_payments',
+            'total_amount', 'sale_payments',
             ]
     
     def validate(self, attrs):
         on_credit = attrs.get('on_credit')
         sale_debt = attrs.get('sale_debt')
+        client = attrs.get('client', None)
 
         if on_credit and not sale_debt:
             raise serializers.ValidationError({
                 'sale_debt': 'Поле должно быть заполнено'
             })
+        
+        if client and client.type != 'Юр.лицо':
+            raise serializers.ValidationError({
+                'client': 'Допускается только юр.лицо'
+            })
+
         return attrs
 
     @transaction.atomic()
     def create(self, validated_data):
         sale_items = validated_data.pop('sale_items', None)
         sale_debt = validated_data.pop('sale_debt', None)
+        sale_payments = validated_data.pop('sale_payments', None)
         total_amount = validated_data.pop('total_amount', None)
         on_credit = validated_data.get('on_credit')
+
+        user = self.context['request'].user
+        store = user.store
         
         new_sale = Sale.objects.create(
-            sold_by=self.context['request'].user,
+            store=store,
+            sold_by=user,
             **validated_data
         )
 
@@ -131,7 +116,15 @@ class SaleSerializer(serializers.ModelSerializer):
         new_sale.save()
 
         if on_credit:
-            Debt.objects.create(sale=new_sale, total_amount=new_sale.total_amount,**sale_debt)
+            Debt.objects.create(sale=new_sale, store=new_sale.store, total_amount=new_sale.total_amount,**sale_debt)
+
+        if sale_payments is not None:
+            payments_lst = [SalePayment(sale=new_sale, **payment) 
+            for payment in sale_payments
+            ]
+            SalePayment.objects.bulk_create(payments_lst)
+        
+        process_sale(new_sale)
 
         return new_sale
 
@@ -139,6 +132,7 @@ class SaleSerializer(serializers.ModelSerializer):
         validated_data.pop('on_credit', None)
         validated_data.pop('sale_items', None)
         validated_data.pop('sale_debt', None)
+        validated_data.pop('sale_payments', None)
 
         for field,value in validated_data.items():
             if value is not None:
