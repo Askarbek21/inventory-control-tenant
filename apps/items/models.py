@@ -31,11 +31,12 @@ class Measurement(models.Model):
 
 class Product(models.Model):
     product_name = models.CharField(max_length=200)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True)
     measurement = models.ManyToManyField(Measurement, through='MeasurementProduct',
                                          related_name='measurements')
     has_color = models.BooleanField(default=False)
     color = models.CharField(max_length=199, null=True, blank=True)
+    history = models.JSONField(null=True, blank=True)
 
     def __str__(self):
         return self.product_name
@@ -66,6 +67,7 @@ class Stock(models.Model):
     date_of_arrived = models.DateTimeField(auto_now_add=True)
     store = models.ForeignKey(Store, on_delete=models.CASCADE)
     quantity = models.FloatField()
+    quantity_for_history = models.FloatField(null=True, blank=True)
     purchase_price_in_us = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
     purchase_price_in_uz = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
     exchange_rate = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)

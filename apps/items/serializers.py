@@ -38,11 +38,19 @@ class ProductSerializer(ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['id', 'product_name', 'category_write', 'category_read', 'measurement', 'color', 'has_color']
+        fields = ['id', 'product_name', 'category_write', 'category_read', 'measurement', 'color', 'has_color',
+                  'history']
 
     def create(self, validated_data):
         measurement_data = validated_data.pop('measurementproduct_set')
+
         product = Product.objects.create(**validated_data)
+        category = product.category.category_name
+        history = {
+            "category": category,
+        }
+        product.history = history
+        product.save()
         for mt in measurement_data:
             MeasurementProduct.objects.create(product=product, **mt)
         return product
@@ -80,13 +88,16 @@ class StockSerializers(ModelSerializer):
     supplier_read = SuppliersModelSerializer(read_only=True, source='supplier')
     supplier_write = serializers.PrimaryKeyRelatedField(queryset=Supplier.objects.all(), write_only=True,
                                                         source='supplier')
+    history_of_prices = serializers.JSONField(read_only=True)
 
     quantity = serializers.FloatField(required=False)
+    quantity_for_history = serializers.FloatField(read_only=True)
     purchase_price_in_us = serializers.FloatField(required=False)
     purchase_price_in_uz = serializers.FloatField(required=False)
     exchange_rate = serializers.FloatField(required=False)
     selling_price = serializers.FloatField(required=False)
     min_price = serializers.FloatField(required=False)
+    date_of_arrived = serializers.DateTimeField()
 
     class Meta:
         model = Stock
@@ -94,18 +105,21 @@ class StockSerializers(ModelSerializer):
                   'product_write', 'store_write', 'store_read', "product_read", 'purchase_price_in_uz',
                   'purchase_price_in_us',
                   'selling_price',
-                  'min_price', "exchange_rate", 'quantity', 'history_of_prices',
-                  'supplier_read', 'supplier_write', 'date_of_arrived'
+                  'min_price', "exchange_rate", 'quantity', 'quantity_for_history', 'history_of_prices',
+                  'supplier_read', 'supplier_write', 'date_of_arrived',
                   ]
 
     def create(self, validated_data):
+        print(validated_data)
         selling_price = float(validated_data.pop('selling_price', 0))
         min_price = float(validated_data.pop('min_price', 0))
         exchange_rate = float(validated_data.pop('exchange_rate', 0))
         purchase_price_in_us = float(validated_data.pop('purchase_price_in_us', 0))
         purchase_price_in_uz = float(validated_data.pop('purchase_price_in_uz', 0))
         quantity = float(validated_data.pop('quantity', 0))
-
+        date_of_arrived = validated_data.pop('date_of_arrived', None)
+        supplier = validated_data.pop('supplier', None)
+        store = validated_data.pop('store', None)
         history = {
             "purchase_price_in_us": purchase_price_in_us,
             "purchase_price_in_uz": purchase_price_in_uz,
@@ -113,6 +127,9 @@ class StockSerializers(ModelSerializer):
             "min_price": min_price,
             "exchange_rate": exchange_rate,
             "quantity": quantity,
+            "date_of_arrived": f'{date_of_arrived}',
+            "supplier": f'{supplier.name} - {supplier.phone_number}',
+            "store": f'{store.name} - {store.phone_number}',
         }
 
         stock = Stock.objects.create(
@@ -123,7 +140,12 @@ class StockSerializers(ModelSerializer):
             purchase_price_in_us=purchase_price_in_us,
             purchase_price_in_uz=purchase_price_in_uz,
             exchange_rate=exchange_rate,
-            quantity=quantity
+            quantity=quantity,
+            quantity_for_history=quantity,
+            date_of_arrived=date_of_arrived,
+            store=store,
+            supplier=supplier
+
         )
 
         return stock
@@ -142,8 +164,6 @@ class StockSerializers(ModelSerializer):
         instance.purchase_price_in_us = purchase_price_in_us
         instance.purchase_price_in_uz = purchase_price_in_uz
         instance.quantity = quantity
-
-
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
