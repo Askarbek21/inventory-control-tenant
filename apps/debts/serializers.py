@@ -23,7 +23,7 @@ class DebtSerializer(serializers.ModelSerializer):
     
     def get_remainder(self, obj):
         remainder = obj.total_amount - obj.deposit - sum([payment.amount for payment in obj.payments.all()])
-        return remainder
+        return remainder if remainder > 0 else 0
     
     def get_sale_read(self, obj):
         from apps.sales.serializers import SaleSerializer
@@ -46,8 +46,7 @@ class DebtPaymentSerializer(serializers.ModelSerializer):
     
     def create(self, validated_data):
         debt = validated_data.get('debt')
-        sale = debt.sale
-
+        
         new_payment = super().create(validated_data)
         
         total_paid = debt.payments.aggregate(total=models.Sum('amount'))['total'] or 0
@@ -55,9 +54,6 @@ class DebtPaymentSerializer(serializers.ModelSerializer):
         if total_paid >= debt.total_amount - debt.deposit:
             debt.is_paid = True
             debt.save(update_fields=['is_paid'])
-
-            sale.is_paid = True 
-            sale.save()
 
         return new_payment
     

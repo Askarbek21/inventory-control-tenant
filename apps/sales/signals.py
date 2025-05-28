@@ -3,6 +3,9 @@ from django.dispatch import receiver
 from django.db import transaction
 
 from apps.items.models import MeasurementProduct
+from apps.debts.models import Debt
+from apps.clients.models import BalanceHistory
+from apps.incomes.models import Income
 from .models import Sale
 
 
@@ -23,5 +26,9 @@ def deduct_stock(instance):
             if product_measurement:
                 product_measurement.number -= float(item.quantity)
                 product_measurement.save(update_fields=['number'])
+
+
+
+
 
 

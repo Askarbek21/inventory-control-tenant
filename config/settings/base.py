@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'apps.suppliers',
     'apps.recycling',
     'apps.expenses',
+    'apps.incomes',
 ]
 
 MIDDLEWARE = [

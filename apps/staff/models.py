@@ -24,6 +24,7 @@ class CustomUser(AbstractUser):
     phone_number = models.CharField(max_length=13, unique=True)
     name = models.CharField(max_length=64, unique=True)
     role = models.CharField(max_length=13, choices=ROLE_CHOICES)
+    store = models.ForeignKey('stores.Store', on_delete=models.CASCADE, related_name='store_staff')
 
     objects = CustomUserManager()
 
@@ -33,17 +34,3 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.name
 
-
-class Staff(models.Model):
-    store = models.ForeignKey('stores.Store', on_delete=models.CASCADE, related_name='store_staff')
-    user = models.ForeignKey('CustomUser', on_delete=models.CASCADE, null=True)
-    is_active = models.BooleanField(default=True)
-    date_joined = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        db_table = 'staff'
-        unique_together = ['store', 'user']
-        ordering = ['-date_joined']
-
-    def __str__(self):
-        return f'{self.user.phone_number} | {self.store.name} | {self.user.role}'
