@@ -1,11 +1,9 @@
+from decimal import Decimal, ROUND_HALF_UP
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from django.db import transaction
 
 from apps.items.models import MeasurementProduct
-from apps.debts.models import Debt
-from apps.clients.models import BalanceHistory
-from apps.incomes.models import Income
 from .models import Sale
 
 
@@ -18,14 +16,22 @@ def deduct_stock(instance):
     for item in instance.sale_items.all():
         stock = item.stock
         product = stock.product
+        quantity_decimal = Decimal(stock.quantity)
+
         if item.selling_method == 'Штук':
-            stock.quantity -= float(item.quantity)
-            stock.save(update_fields=['quantity'])
+            quantity_decimal -= Decimal(item.quantity)
+            
         else:
             product_measurement = MeasurementProduct.objects.filter(product=product, for_sale=True).first()
             if product_measurement:
-                product_measurement.number -= float(item.quantity)
-                product_measurement.save(update_fields=['number'])
+                meters_per_piece = product_measurement.number
+                required_piece = Decimal(item.quantity) / Decimal(meters_per_piece)
+                quantity_decimal -= required_piece
+
+        stock.quantity = quantity_decimal.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        stock.save(update_fields=['quantity'])
+
+        
 
 
 

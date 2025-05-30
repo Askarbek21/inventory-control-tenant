@@ -13,7 +13,9 @@ def increment_store_budget(sender, instance, created, **kwargs):
         store.save(update_fields=['budget'])
 
         Income.objects.create(
-        store=store, source='Погашение долга', 
+        store=store, 
+        source='Погашение долга',
+        worker=instance.worker,
         description={
             "Client": instance.debt.client.name,
             "Amount": str(instance.amount),

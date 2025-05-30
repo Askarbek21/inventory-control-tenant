@@ -4,7 +4,7 @@ from rest_framework import routers
 from .views import SaleViewset
 
 router = routers.SimpleRouter()
-router.register(r'', SaleViewset)
+router.register(r'', SaleViewset, basename='sale')
 
 
 urlpatterns = [

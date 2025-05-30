@@ -4,7 +4,7 @@ from rest_framework_nested import routers
 from .views import DebtViewset, DebtPaymentViewset
 
 router = routers.SimpleRouter()
-router.register(r'', DebtViewset)
+router.register(r'', DebtViewset, basename='debt')
 
 payment_router = routers.NestedSimpleRouter(router, r'', lookup='debt')
 payment_router.register(r'payments', DebtPaymentViewset, basename='debt-payments')

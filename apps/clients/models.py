@@ -1,6 +1,8 @@
+from decimal import Decimal
 from django.db import models
 
-from config.constants import CLIENT_TYPE_CHOICES
+from apps.staff.models import CustomUser
+from config.constants import CLIENT_TYPE_CHOICES, BALANCE_HISTORY_TYPE_CHOICES
 
 
 class Client(models.Model):
@@ -17,14 +19,20 @@ class Client(models.Model):
 
     def __str__(self):
         return self.name
+    
+    def increment_balance(self, amount):
+        self.balance = (self.balance or Decimal('0.00')) + amount
+        self.save(update_fields=['balance'])
 
 
 class BalanceHistory(models.Model):
+    type = models.CharField(max_length=10, choices=BALANCE_HISTORY_TYPE_CHOICES)
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='balance_history')
     sale = models.ForeignKey('sales.Sale', on_delete=models.SET_NULL, null=True)
+    worker = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True)
     previous_balance = models.DecimalField(max_digits=10, decimal_places=2)
     new_balance = models.DecimalField(max_digits=10, decimal_places=2)
-    amount_deducted = models.DecimalField(max_digits=10, decimal_places=2)
+    amount_deducted = models.DecimalField(max_digits=10, decimal_places=2, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:

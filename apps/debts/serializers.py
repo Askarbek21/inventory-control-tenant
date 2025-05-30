@@ -1,6 +1,9 @@
+from django.db import transaction
+from django.utils import timezone
 from rest_framework import serializers
 
 from apps.clients.serializers import ClientSerializer
+from apps.staff.serializers import UserSerializer
 from .models import *
 
 
@@ -21,6 +24,14 @@ class DebtSerializer(serializers.ModelSerializer):
             'remainder'
         ]
     
+    def validate(self, attrs):
+        due_date = attrs.get('due_date')
+
+        if due_date and due_date <= timezone.now().date():
+            raise serializers.ValidationError('Некорректная дата')
+
+        return attrs
+    
     def get_remainder(self, obj):
         remainder = obj.total_amount - obj.deposit - sum([payment.amount for payment in obj.payments.all()])
         return remainder if remainder > 0 else 0
@@ -31,11 +42,12 @@ class DebtSerializer(serializers.ModelSerializer):
 
 
 class DebtPaymentSerializer(serializers.ModelSerializer):
+    worker_read = UserSerializer(read_only=True, source='worker')
     
     class Meta:
         model = DebtPayment
-        fields = '__all__'
-    
+        fields = ['id', 'debt', 'worker_read', 'amount', 'payment_method', 'paid_at']
+
     def validate(self, attrs):
         debt = attrs.get('debt')
 
@@ -44,10 +56,12 @@ class DebtPaymentSerializer(serializers.ModelSerializer):
 
         return attrs
     
+    @transaction.atomic()
     def create(self, validated_data):
         debt = validated_data.get('debt')
-        
-        new_payment = super().create(validated_data)
+        user = self.context['request'].user
+
+        new_payment = DebtPayment.objects.create(worker=user, **validated_data)
         
         total_paid = debt.payments.aggregate(total=models.Sum('amount'))['total'] or 0
         
@@ -67,3 +81,11 @@ class DebtInSaleSerializer(serializers.ModelSerializer):
     class Meta:
         model = Debt 
         fields = ['client', 'due_date', 'deposit']
+    
+    def validate(self, attrs):
+        due_date = attrs.get('due_date')
+
+        if due_date and due_date <= timezone.now().date():
+            raise serializers.ValidationError('Некорректная дата')
+
+        return attrs

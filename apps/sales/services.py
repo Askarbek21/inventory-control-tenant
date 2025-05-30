@@ -16,10 +16,26 @@ def process_sale(sale: Sale):
             Income.objects.create(
                 source='Продажа',
                 store=store,
+                worker=sale.sold_by,
                 description={
-                    "Worker": sale.sold_by.name,
                     "Amount": str(sale.total_amount),
                     "Sold Date": str(sale.sold_date),
+                    "Items": [
+                        {
+                            "Product": item.stock.product.product_name,
+                            "Quantity": str(item.quantity),
+                            "Selling Method": item.selling_method,
+                            "Subtotal": str(item.subtotal)
+                        }
+                        for item in sale.sale_items.select_related('stock__product')
+                    ],
+                    "Payments": [
+                        {
+                            "Method": payment.payment_method,
+                            "Amount": payment.amount
+                        }
+                        for payment in sale.sale_payments.all()
+                    ]
                 }
             )
         return
@@ -37,19 +53,36 @@ def process_sale(sale: Sale):
         Income.objects.create(
             source='Продажа',
             store=store,
+            worker=sale.sold_by,
             description={
-                "Worker": sale.sold_by.name,
                 "Amount": str(paid_amount),
                 "Sold Date": str(sale.sold_date),
+                "Items": [
+                        {
+                            "Product": item.stock.product.product_name,
+                            "Quantity": str(item.quantity),
+                            "Selling Method": item.selling_method,
+                            "Subtotal": str(item.subtotal)
+                        }
+                        for item in sale.sale_items.select_related('stock__product')
+                    ],
+                "Payments": [
+                    {
+                        "Method": "Перечисление",
+                        "Amount": str(paid_amount)
+                    }
+                ]
             }
         )
 
     BalanceHistory.objects.create(
+        type='Расход',
         client=client,
         sale=sale,
         previous_balance=old_balance,
         new_balance=new_balance,
         amount_deducted=paid_amount,
+        worker=sale.sold_by
     )
 
     client.balance = new_balance

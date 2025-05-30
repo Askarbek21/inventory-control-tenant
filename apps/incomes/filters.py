@@ -2,6 +2,7 @@ from django_filters import rest_framework as filters
 
 from config.constants import SOURCE_TYPE_CHOICES
 from apps.stores.models import Store
+from apps.staff.models import CustomUser
 from .models import Income
 
 
@@ -9,6 +10,11 @@ class IncomeFilter(filters.FilterSet):
     store = filters.ModelChoiceFilter(
         queryset=Store.objects.all(),
         field_name='store',
+        to_field_name='id'
+    )
+    worker = filters.ModelChoiceFilter(
+        queryset=CustomUser.objects.all(),
+        field_name='worker',
         to_field_name='id'
     )
     source = filters.ChoiceFilter(choices=SOURCE_TYPE_CHOICES)

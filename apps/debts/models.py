@@ -4,6 +4,7 @@ from config.constants import PAYMENT_METHOD_CHOICES
 from apps.sales.models import Sale 
 from apps.clients.models import Client
 from apps.stores.models import Store
+from apps.staff.models import CustomUser
 
 
 class Debt(models.Model):
@@ -29,6 +30,7 @@ class DebtPayment(models.Model):
     debt = models.ForeignKey(Debt, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     payment_method = models.CharField(max_length=12, choices=PAYMENT_METHOD_CHOICES)
+    worker = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='registered_payments')
     paid_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

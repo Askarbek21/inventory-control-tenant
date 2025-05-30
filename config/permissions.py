@@ -1,41 +1,119 @@
 from rest_framework import permissions
 
 
-class IsStoreMember(permissions.BasePermission):
-    def has_object_permission(self, request, view, obj):
-        if request.user.is_superuser:
-            return True
-        return obj.store == request.user.store
-
-
-class RoleBasedPermission(permissions.BasePermission):
-
-    def __init__(self, allowed_roles):
-        self.allowed_roles = allowed_roles
-
+class IsSelfOrAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.user.is_superuser:
-            return True
-        return request.user.role in self.allowed_roles
+            return True 
+        if view.action != 'me':
+            return False
 
 
 class SalePermission(permissions.BasePermission):
     def has_permission(self, request, view):
-
         if request.user.is_superuser:
             return True
-
-        if view.action == 'create':
-            return request.user.role in ['Продавец', 'Администратор']
+        
+        if view.action in ['list', 'create', 'retrieve', 'update', 'partial_update']:
+                return True
+        
+        return False 
+    
+    def has_object_permission(self, request, view, obj):
+        if request.user.is_superuser:
+            return True 
+        
+        if view.action in ['retrieve', 'update', 'partial_update']:
+            return obj.store == request.user.store
         
         return False
 
-    def has_object_permission(self, request, view, obj):
 
+class StorePermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.user.is_superuser or view.action in ['list', 'retrieve']:
+            return True 
+        
+        return False
+    
+    def has_object_permission(self, request, view, obj):
         if request.user.is_superuser:
-            return True
-            
+            return True 
+        
+        if view.action == 'retrieve':
+            return obj == request.user.store
+
+        return False
+
+
+class ItemPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.is_superuser:
+            return True 
+        
         if request.user.role == 'Администратор':
-            return obj.store == request.user.store
+            if view.action in ['list', 'retrieve']:
+                return True 
+        
+        return False
+    
+    def has_object_permission(self, request, view, obj):
+        if request.user.is_superuser:
+            return True 
+
+        return False
+
+
+class ClientPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.user.is_superuser or view.action in ['list', 'retrieve', 'create']:
+            return True 
+        
+        return False 
+
+
+class DebtPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.user.is_superuser:
+            return True 
+        
+        if view.action in ['create', 'list', 'retrieve']:
+            return True 
+        
+        if view.action in ['update', 'partial_update']:
+            if request.user.role == 'Администратор':
+                return True 
             
         return False
+
+    def has_object_permission(self, request, view, obj):
+        if request.user.is_superuser:
+            return True 
+        if view.action in ['retrieve', 'update', 'partial_update']:
+            return obj.store == request.user.store
+        return False
+
+
+class DebtPaymentPermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.user.is_superuser:
+            return True 
+        
+        if view.action in ['create', 'list', 'retrieve']:
+            return True 
+        
+        if view.action in ['update', 'partial_update']:
+            if request.user.role == 'Администратор':
+                return True
+            
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        if request.user.is_superuser:
+            return True 
+        if view.action in ['retrieve', 'update', 'partial_update']:
+            return obj.debt.store == request.user.store
+        return False
+
+
+

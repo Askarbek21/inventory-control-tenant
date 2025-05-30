@@ -1,22 +1,14 @@
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework_simplejwt.views import TokenObtainPairView
-#from rest_framework_roles.granting import is_self
 
+from config.permissions import IsSelfOrAdmin
 from .serializers import *
 
 
 class UserViewset(viewsets.ModelViewSet):
+    permission_classes = [IsSelfOrAdmin]
     serializer_class = UserSerializer
-    queryset = CustomUser.objects.all()
-    #view_permissions = {
-    #    'options': {'admin':True},
-    #    'create': {'admin':True},
-    #    'list': {'admin':True},
-    #    'retrieve': {'admin':True, 'user': is_self},
-    #    'update,partial_update': {'admin': True, 'user': is_self},
-    #    'destroy': {'admin':True}, 
-    #}
 
     @action(detail=False, methods=['GET', 'PATCH'])
     def me(self, request):
@@ -27,6 +19,11 @@ class UserViewset(viewsets.ModelViewSet):
             return self.partial_update(request)
         else:
             raise NotImplementedError
+    
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return CustomUser.objects.all()
+        return CustomUser.objects.filter(store=self.request.user.store).select_related('store')
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
