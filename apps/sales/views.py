@@ -1,4 +1,5 @@
 from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
 
 from config.permissions import SalePermission
 from .serializers import *
@@ -6,7 +7,7 @@ from .filters import SaleFilter
 
 
 class SaleViewset(viewsets.ModelViewSet):
-    permission_classes = [SalePermission]
+    permission_classes = [IsAuthenticated, SalePermission]
     serializer_class = SaleSerializer
     filterset_class = SaleFilter
 

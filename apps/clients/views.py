@@ -1,13 +1,16 @@
 from django.db import transaction
 from rest_framework import viewsets, generics, response, status
 from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
 
+from config.permissions import ClientPermission
 from .serializers import *
 from .services import log_client_balance
 from .filters import ClientFilter, ClientBalanceFilter
 
 
 class ClientViewset(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, ClientPermission]
     lookup_url_kwarg = 'client_pk'
     serializer_class = ClientSerializer
     filterset_class = ClientFilter

@@ -1,4 +1,5 @@
 from rest_framework import viewsets 
+from rest_framework.permissions import IsAuthenticated
 
 from config.permissions import DebtPermission, DebtPaymentPermission
 from .serializers import *
@@ -6,7 +7,7 @@ from .filters import DebtFilter, DebtPaymentFilter
 
 
 class DebtViewset(viewsets.ModelViewSet):
-    permission_classes = [DebtPermission]
+    permission_classes = [IsAuthenticated, DebtPermission]
     serializer_class = DebtSerializer
     filterset_class = DebtFilter
 
@@ -17,7 +18,7 @@ class DebtViewset(viewsets.ModelViewSet):
 
 
 class DebtPaymentViewset(viewsets.ModelViewSet):
-    permission_classes = [DebtPaymentPermission]
+    permission_classes = [IsAuthenticated, DebtPaymentPermission]
     serializer_class = DebtPaymentSerializer
     filterset_class = DebtPaymentFilter
 

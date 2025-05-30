@@ -109,9 +109,6 @@ REST_FRAMEWORK = {
     ]
 }
 
-REST_FRAMEWORK_ROLES = {
-  'ROLES': 'config.roles.ROLES',
-}
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=999),
