@@ -32,7 +32,7 @@ def process_sale(sale: Sale):
                     "Payments": [
                         {
                             "Method": payment.payment_method,
-                            "Amount": payment.amount
+                            "Amount": str(payment.amount)
                         }
                         for payment in sale.sale_payments.all()
                     ]
