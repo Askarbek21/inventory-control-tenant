@@ -1,5 +1,5 @@
-from django.db.models import Sum, F, DecimalField, ExpressionWrapper
-from django.db.models.functions import Cast, TruncDate
+from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Value
+from django.db.models.functions import Cast, TruncDate, Coalesce
 from django.utils.timezone import now, timedelta
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -104,7 +104,7 @@ class ProductIntakeView(APIView):
         stocks = stocks.annotate(
             total_value=ExpressionWrapper(
                 F('quantity') * F('purchase_price_in_uz'),
-                output_field=DecimalField()
+                output_field=DecimalField(max_digits=25, decimal_places=2)
             )
         )
 
@@ -136,10 +136,10 @@ class ProductProfitabilityView(APIView):
             product_name=F('stock__product__product_name')
         ).annotate(
             revenue=Sum('subtotal'),
-            cost=Sum(ExpressionWrapper(F('stock__purchase_price_in_uz') * F('quantity'), output_field=DecimalField())),
+            cost=Sum(ExpressionWrapper(F('stock__purchase_price_in_uz') * F('quantity'), output_field=DecimalField(max_digits=25, decimal_places=2))),
         ).annotate(
             profit=F('revenue') - F('cost'),
-            margin=ExpressionWrapper(Cast(F('profit'), DecimalField()) *100 / Cast(F('revenue'), DecimalField()), output_field=DecimalField())
+            margin=ExpressionWrapper(Cast(F('profit'), DecimalField(max_digits=25, decimal_places=2)) *100 / Cast(F('revenue'), DecimalField(max_digits=25, decimal_places=2)), output_field=DecimalField(max_digits=25, decimal_places=2))
         )
 
         sort = request.query_params.get('sort', 'profit')
@@ -162,8 +162,3 @@ class ClientDebtView(APIView):
         ).order_by('-debt')
 
         return Response(ClientDebtSerializer(debts_data, many=True).data)
-
-
-
-
-    
