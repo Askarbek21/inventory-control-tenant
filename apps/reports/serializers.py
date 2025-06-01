@@ -28,4 +28,7 @@ class ProductProfitabilitySerializer(serializers.Serializer):
 
 class ClientDebtSerializer(serializers.Serializer):
     client_name = serializers.CharField()
-    debt = serializers.DecimalField(max_digits=12, decimal_places=2)
+    total_debt = serializers.DecimalField(max_digits=12, decimal_places=2)
+    total_paid = serializers.DecimalField(max_digits=12, decimal_places=2)
+    remaining_debt = serializers.DecimalField(max_digits=12, decimal_places=2)
+    deposit = serializers.DecimalField(max_digits=12, decimal_places=2)

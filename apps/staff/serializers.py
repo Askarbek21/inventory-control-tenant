@@ -49,7 +49,7 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['name'] = user.name
         token['phone_number'] = user.phone_number
         token['role'] = user.role
-        token['store'] = user.store.id or None
+        token['store'] = user.store.id if user.store else None
         token['is_superuser'] = user.is_superuser
 
         return token

@@ -81,7 +81,7 @@ def process_sale(sale: Sale):
         sale=sale,
         previous_balance=old_balance,
         new_balance=new_balance,
-        amount_deducted=paid_amount,
+        amount_deducted=sale.total_amount,
         worker=sale.sold_by
     )
 

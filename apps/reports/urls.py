@@ -10,4 +10,5 @@ urlpatterns = [
     path('product-intake/', ProductIntakeView.as_view()),
     path('product-profitability/', ProductProfitabilityView.as_view()),
     path('client-debts/', ClientDebtView.as_view()),
+    path('top-sellers/', TopSellersView.as_view()),
 ]

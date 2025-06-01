@@ -5,8 +5,8 @@ class IsSelfOrAdmin(permissions.BasePermission):
     def has_permission(self, request, view):
         if request.user.is_superuser:
             return True 
-        if view.action != 'me':
-            return False
+        if view.action == 'me':
+            return True
 
 
 class SalePermission(permissions.BasePermission):

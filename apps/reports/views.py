@@ -1,4 +1,4 @@
-from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Value
+from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Count
 from django.db.models.functions import Cast, TruncDate, Coalesce
 from django.utils.timezone import now, timedelta
 from rest_framework.views import APIView
@@ -104,7 +104,7 @@ class ProductIntakeView(APIView):
         stocks = stocks.annotate(
             total_value=ExpressionWrapper(
                 F('quantity') * F('purchase_price_in_uz'),
-                output_field=DecimalField(max_digits=25, decimal_places=2)
+                output_field=DecimalField(max_digits=20, decimal_places=2)
             )
         )
 
@@ -136,10 +136,10 @@ class ProductProfitabilityView(APIView):
             product_name=F('stock__product__product_name')
         ).annotate(
             revenue=Sum('subtotal'),
-            cost=Sum(ExpressionWrapper(F('stock__purchase_price_in_uz') * F('quantity'), output_field=DecimalField(max_digits=25, decimal_places=2))),
+            cost=Sum(ExpressionWrapper(F('stock__purchase_price_in_uz') * F('quantity'), output_field=DecimalField(max_digits=20, decimal_places=2))),
         ).annotate(
             profit=F('revenue') - F('cost'),
-            margin=ExpressionWrapper(Cast(F('profit'), DecimalField(max_digits=25, decimal_places=2)) *100 / Cast(F('revenue'), DecimalField(max_digits=25, decimal_places=2)), output_field=DecimalField(max_digits=25, decimal_places=2))
+            margin=ExpressionWrapper(Cast(F('profit'), DecimalField(max_digits=25, decimal_places=2)) *100 / Cast(F('revenue'), DecimalField(max_digits=20, decimal_places=2)), output_field=DecimalField(max_digits=20, decimal_places=2))
         )
 
         sort = request.query_params.get('sort', 'profit')
@@ -153,12 +153,57 @@ class ProductProfitabilityView(APIView):
 
 class ClientDebtView(APIView):
     permission_classes = [IsAdminUser]
+
     def get(self, request):
-        debts = Debt.objects.exclude(is_paid=True)
+        debts = Debt.objects.exclude(is_paid=True).annotate(
+            client_name=F('client__name'),
+            total_debt=F('total_amount'),
+            total_paid=Coalesce(
+                Sum('payments__amount'),
+                0,
+                output_field=DecimalField(max_digits=20, decimal_places=2)
+            ),
+            remaining_debt=ExpressionWrapper(
+                F('total_amount') - F('total_paid') - F('deposit'),
+                output_field=DecimalField(max_digits=20, decimal_places=2)
+            )
+        ).order_by('-remaining_debt')
+        
         debts_data = debts.values(
-            client_name=F('client__name')
-        ).annotate(
-            debt=Sum('total_amount')
-        ).order_by('-debt')
+            'client_name',
+            'total_debt',
+            'total_paid',
+            'remaining_debt',
+            'deposit',
+        )
 
         return Response(ClientDebtSerializer(debts_data, many=True).data)
+
+
+class TopSellersView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self, request):
+        period = request.query_params.get('period', 'month')
+        today = now()
+
+        if period == 'day':
+            start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
+        elif period == 'week':
+            start_date = today - timedelta(days=7)
+        else:
+            start_date = today - timedelta(days=30)
+
+        sellers = Sale.objects.filter(
+            sold_date__gte=start_date,
+            on_credit=False
+        ).values(
+            store_name = F('store__name'),
+            seller_name=F('sold_by__name'),
+            seller_phone=F('sold_by__phone_number')
+        ).annotate(
+            total_revenue=Sum('total_amount'),
+            total_sales=Count('id')
+        ).order_by('-total_revenue')
+
+        return Response(sellers)
