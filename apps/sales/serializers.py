@@ -110,7 +110,7 @@ class SaleSerializer(serializers.ModelSerializer):
 
         user = self.context['request'].user
         store = user.store
-        if user.is_superuser:
+        if user.is_superuser and sold_by and store_written:
             
             new_sale = Sale.objects.create(
                 store=store_written,
