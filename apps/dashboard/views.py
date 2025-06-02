@@ -12,7 +12,7 @@ class ItemsDashboardAPIView(APIView):
     serializer_class = ItemsDashboardSerializer
 
     def get(self, request):
-        if request.user.role == "Владелец":
+        if request.user.role == "Администратор":
             stock = Stock.objects.select_related(
                 "product",
                 "store",
