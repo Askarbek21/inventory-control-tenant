@@ -32,9 +32,13 @@ class MeasurementViewSet(viewsets.ModelViewSet):
 
 
 class StockViewSet(viewsets.ModelViewSet):
-    queryset = Stock.objects.all()
+
     serializer_class = StockSerializers
     pagination_class = CustomPageNumberPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = StockFilter
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Stock.objects.filter(store__owner=user.id)
+        return queryset
 
