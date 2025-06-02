@@ -12,15 +12,26 @@ class ItemsDashboardAPIView(APIView):
     serializer_class = ItemsDashboardSerializer
 
     def get(self, request):
-        stock = Stock.objects.select_related(
-            "product",
-            "store",
-            "supplier",
-        ).only(
-            'id', 'product',
-            'quantity', 'quantity_for_history',
-            'store', 'supplier', 'date_of_arrived'
-        )
+        if request.user.role == "Владелец":
+            stock = Stock.objects.select_related(
+                "product",
+                "store",
+                "supplier",
+            ).only(
+                'id', 'product',
+                'quantity', 'quantity_for_history',
+                'store', 'supplier', 'date_of_arrived'
+            )
+        else:
+            stock = Stock.objects.select_related(
+                "product",
+                "store",
+                "supplier",
+            ).only(
+                'id', 'product',
+                'quantity', 'quantity_for_history',
+                'store', 'supplier', 'date_of_arrived'
+            ).filter(store__owner=request.user.id)
         total_product = stock.count()
         info_products = (
             stock.values('product__product_name', 'store__name').annotate(total_quantity=Sum('quantity'))
