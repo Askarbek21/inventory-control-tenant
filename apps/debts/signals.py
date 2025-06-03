@@ -2,7 +2,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 
 from apps.incomes.models import Income
-from .models import DebtPayment
+from .models import DebtPayment, Debt
 
 
 @receiver(post_save, sender=DebtPayment)
@@ -24,4 +24,13 @@ def increment_store_budget(sender, instance, created, **kwargs):
         }
         )
 
+
+@receiver(post_save, sender=Debt)
+def update_related_sale(sender, instance, created, **kwargs):
+    sale = instance.sale 
+    if created:
+        return 
+    if instance.is_paid:
+        sale.is_paid = True
+        sale.save(update_fields=['is_paid']) 
 

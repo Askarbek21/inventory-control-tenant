@@ -65,7 +65,7 @@ class SaleSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'store_read', 'worker_read', 'client', 'store', 'sold_by',
             'on_credit', 'sale_items', 'sale_debt',
-            'total_amount', 'sale_payments',
+            'total_amount', 'sale_payments', 'is_paid',
             ]
     
     def validate(self, attrs):
@@ -142,9 +142,6 @@ class SaleSerializer(serializers.ModelSerializer):
                 ))
             
             SaleItem.objects.bulk_create(item_instances)
-            
-        new_sale.total_amount = total_amount or new_sale.get_total_amount()
-        new_sale.save()
 
         if on_credit:
             Debt.objects.create(sale=new_sale, store=new_sale.store, total_amount=new_sale.total_amount,**sale_debt)
@@ -155,12 +152,17 @@ class SaleSerializer(serializers.ModelSerializer):
             ]
             SalePayment.objects.bulk_create(payments_lst)
         
+        new_sale.total_amount = total_amount or new_sale.get_total_amount()
+        new_sale.is_paid = False if on_credit else True
+        new_sale.save()
+        
         process_sale(new_sale)
 
         return new_sale
 
     def update(self, instance, validated_data):
         validated_data.pop('on_credit', None)
+        validated_data.pop('is_paid', None)
         validated_data.pop('sale_items', None)
         validated_data.pop('sale_debt', None)
         validated_data.pop('sale_payments', None)

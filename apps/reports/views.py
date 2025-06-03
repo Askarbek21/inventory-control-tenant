@@ -1,36 +1,31 @@
 from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Count
-from django.db.models.functions import Cast, TruncDate, Coalesce
+from django.db.models.functions import Cast, TruncDate, Coalesce, TruncMonth
 from django.utils.timezone import now, timedelta
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 
 from apps.sales.models import Sale, SaleItem, Stock
 from apps.debts.models import Debt
 from apps.items.models import Product
+from apps.expenses.models import Expense
 from .serializers import *
+from .utils import get_date_range_with_period
 
 
 class SalesSummaryView(APIView):
     permission_classes = [IsAdminUser]
+    
     def get(self, request):
-        period = request.query_params.get('period', 'day')
-        today = now()
+        date_from, date_to = get_date_range_with_period(request)
 
-        if period == 'week':
-            start = today - timedelta(days=7)
-        elif period == 'month':
-            start = today - timedelta(days=30)
-        else:
-            start = today.replace(hour=0, minute=0, second=0, microsecond=0)
-
-        sales = Sale.objects.filter(sold_date__gte=start, on_credit=False)
+        sales = Sale.objects.filter(sold_date__range=(date_from, date_to), is_paid=True)
         total_revenue = sales.aggregate(total=Sum('total_amount'))['total'] or 0
         total_sales = sales.count()
 
-        trend = sales.annotate(day=TruncDate('sold_date')).values('day').annotate(
+        trend = sales.annotate(month=TruncMonth('sold_date')).values('month').annotate(
             total=Sum('total_amount')
-        ).order_by('day')
+        ).order_by('month')
 
         return Response({
             "total_sales": total_sales, 
@@ -42,11 +37,10 @@ class SalesSummaryView(APIView):
 class TopProductsView(APIView):
     permission_classes = [IsAdminUser]
     def get(self, request):
-        period = request.query_params.get('period', 'month')
+        date_from, date_to = get_date_range_with_period(request)
         limit = int(request.query_params.get('limit', 5))
-        start = now() - timedelta(days=30 if period == 'month' else 7)
 
-        items = SaleItem.objects.filter(sale__sold_date__gte=start).values(
+        items = SaleItem.objects.filter(sale__sold_date__range=(date_from, date_to)).values(
             product_name=F('stock__product__product_name')
         ).annotate(
             total_quantity=Sum('quantity'),
@@ -58,6 +52,7 @@ class TopProductsView(APIView):
 
 class UnsoldProductsView(APIView):
     permission_classes = [IsAdminUser]
+
     def get(self, request):
         days = int(request.query_params.get('days', 30))
         cutoff = now() - timedelta(days=days)
@@ -87,19 +82,11 @@ class StockByCategoryView(APIView):
 
 class ProductIntakeView(APIView):
     permission_classes = [IsAdminUser]
+
     def get(self, request):
-        period = request.query_params.get('period', 'month')
+        date_from, date_to = get_date_range_with_period(request)
 
-        if period == 'day':
-            days = 1
-        elif period == 'week':
-            days = 7
-        else:
-            days = 30
-
-        start_date = now() - timedelta(days=days)
-
-        stocks = Stock.objects.filter(date_of_arrived__gte=start_date)
+        stocks = Stock.objects.filter(date_of_arrived__range=(date_from, date_to))
 
         stocks = stocks.annotate(
             total_value=ExpressionWrapper(
@@ -130,9 +117,10 @@ class ProductIntakeView(APIView):
 
 class ProductProfitabilityView(APIView):
     permission_classes = [IsAdminUser]
+
     def get(self, request):
 
-        items = SaleItem.objects.exclude(sale__on_credit=True).select_related('stock__product').values(
+        items = SaleItem.objects.filter(sale__is_paid=True).select_related('stock__product').values(
             product_name=F('stock__product__product_name')
         ).annotate(
             revenue=Sum('subtotal'),
@@ -184,19 +172,11 @@ class TopSellersView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        period = request.query_params.get('period', 'month')
-        today = now()
-
-        if period == 'day':
-            start_date = today.replace(hour=0, minute=0, second=0, microsecond=0)
-        elif period == 'week':
-            start_date = today - timedelta(days=7)
-        else:
-            start_date = today - timedelta(days=30)
+        date_from, date_to = get_date_range_with_period(request)
 
         sellers = Sale.objects.filter(
-            sold_date__gte=start_date,
-            on_credit=False
+            sold_date__range=(date_from, date_to),
+            is_paid=True
         ).values(
             store_name = F('store__name'),
             seller_name=F('sold_by__name'),
@@ -207,3 +187,57 @@ class TopSellersView(APIView):
         ).order_by('-total_revenue')
 
         return Response(sellers)
+
+
+class ExpenseSummaryView(APIView):
+    permission_classes = [IsAdminUser]
+
+    def get(self,request):
+        date_from, date_to = get_date_range_with_period(request)
+
+        expenses = Expense.objects.filter(date__range=(date_from, date_to))
+
+        total_expense = expenses.aggregate(total=Sum('amount'))['total'] or 0
+        grouped = (
+            expenses.values('expense_name__name')
+            .order_by('expense_name__name')
+        )
+
+        return Response({
+            "total_expense": total_expense,
+            "expenses": list(grouped)
+        })
+
+
+class SalesmanSummaryView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self,request):
+        date_from, date_to = get_date_range_with_period(request)
+
+        sales = Sale.objects.filter(sold_date__range=(date_from, date_to), sold_by=request.user, is_paid=True)
+        total_revenue = sales.aggregate(total=Sum('total_amount'))['total'] or 0
+        total_sales = sales.count()
+
+        return Response({
+            "total_sales": total_sales, 
+            "total_revenue": total_revenue,
+        })
+
+
+class SalesmanDebtView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self,request):
+        user = request.user
+        date_from, date_to = get_date_range_with_period(request)
+
+        debts = Debt.objects.filter(sale__sold_by=user, is_paid=False, created_at__range=(date_from, date_to))
+        total_debt = debts.aggregate(total=Sum('total_amount'))['total'] or 0
+        count = debts.count()
+    
+        return Response({
+            "total_count": count, 
+            "total_debt": total_debt,
+        })
+

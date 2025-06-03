@@ -19,10 +19,7 @@ class DebtFilter(filters.FilterSet):
         field_name='client',
         to_field_name='id'
     )
-    due_date = filters.DateFromToRangeFilter()
     is_paid = filters.BooleanFilter()
-    created_at = filters.DateTimeFromToRangeFilter()
-    total_amount = filters.RangeFilter()
 
     class Meta:
         model = Debt
