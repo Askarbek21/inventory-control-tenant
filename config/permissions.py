@@ -112,7 +112,7 @@ class DebtPaymentPermission(permissions.BasePermission):
 
 class StockPermission(permissions.BasePermission):
     def has_permission(self, request, view):
-        if request.is_superuser:
+        if request.user.is_superuser:
             return True 
         
         if view.action in ['list', 'retrieve']:
