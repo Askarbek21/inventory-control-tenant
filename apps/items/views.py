@@ -1,13 +1,15 @@
-
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets
 
 from apps.items.serializers import *
 from config.pagination import CustomPageNumberPagination
+from config.permissions import ItemPermission, StockPermission
 from .filters import *
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, ItemPermission]
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     pagination_class = CustomPageNumberPagination
@@ -16,6 +18,7 @@ class CategoryViewSet(viewsets.ModelViewSet):
 
 
 class ProductViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, ItemPermission]
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     pagination_class = CustomPageNumberPagination
@@ -24,6 +27,7 @@ class ProductViewSet(viewsets.ModelViewSet):
 
 
 class MeasurementViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, ItemPermission]
     queryset = Measurement.objects.all()
     serializer_class = MeasurementSerializer
     pagination_class = CustomPageNumberPagination
@@ -32,13 +36,14 @@ class MeasurementViewSet(viewsets.ModelViewSet):
 
 
 class StockViewSet(viewsets.ModelViewSet):
-
+    permission_classes = [IsAuthenticated, StockPermission]
     serializer_class = StockSerializers
     pagination_class = CustomPageNumberPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = StockFilter
+
     def get_queryset(self):
-        user = self.request.user
-        queryset = Stock.objects.filter(store__owner=user.id)
-        return queryset
+        if self.request.user.is_superuser:
+            return Stock.objects.all()
+        return Stock.objects.filter(store=self.request.user.store)
 

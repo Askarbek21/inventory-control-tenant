@@ -1,8 +1,10 @@
 from django.shortcuts import render
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.viewsets import ModelViewSet
+from rest_framework.permissions import IsAuthenticated
 
 from config.pagination import CustomPageNumberPagination
+from config.permissions import ExpensePermission
 from .filters import ExpensesNameFilter, CashInFlowNameFilter, ExpensesFilter, CashInFlowFilter
 from .models import ExpenseName, CashInFlowName, Expense, CashInFlow
 from .serializers import ExpenseNameSerializer, CashInFlowNameSerializer, ExpenseSerializer, CashInFlowSerializer
@@ -25,16 +27,26 @@ class CashInFlowNameViewSet(ModelViewSet):
 
 
 class ExpenseViewSet(ModelViewSet):
-    queryset = Expense.objects.all()
+    permission_classes = [IsAuthenticated, ExpensePermission]
     serializer_class = ExpenseSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_class = ExpensesFilter
     pagination_class = CustomPageNumberPagination
 
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return Expense.objects.all()
+        return Expense.objects.filter(store__owner=self.request.user)
+    
 
 class CashInFlowViewSet(ModelViewSet):
-    queryset = CashInFlow.objects.all()
+    permission_classes = [IsAuthenticated, ExpensePermission]
     serializer_class = CashInFlowSerializer
     pagination_class = CustomPageNumberPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = CashInFlowFilter
+
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return CashInFlow.objects.all()
+        return CashInFlow.objects.filter(store__owner=self.request.user)
