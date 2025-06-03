@@ -45,7 +45,7 @@ class StorePermission(permissions.BasePermission):
 
 class ItemPermission(permissions.BasePermission):
     def has_permission(self, request, view):
-        if request.is_superuser:
+        if request.user.is_superuser:
             return True 
         
         if request.user.role == 'Администратор' and view.action in ['list', 'retrieve']:
@@ -128,7 +128,7 @@ class StockPermission(permissions.BasePermission):
 
 class ExpensePermission(permissions.BasePermission):
     def has_permission(self, request, view):
-        if request.is_superuser or request.user.role == 'Администратор':
+        if request.user.is_superuser or request.user.role == 'Администратор':
             return True 
         
         return False
