@@ -143,29 +143,25 @@ class ClientDebtView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, request):
-        debts = Debt.objects.exclude(is_paid=True).annotate(
-            client_name=F('client__name'),
-            total_debt=F('total_amount'),
-            total_paid=Coalesce(
-                Sum('payments__amount'),
-                0,
-                output_field=DecimalField(max_digits=20, decimal_places=2)
-            ),
-            remaining_debt=ExpressionWrapper(
-                F('total_amount') - F('total_paid') - F('deposit'),
-                output_field=DecimalField(max_digits=20, decimal_places=2)
+        debts = (
+            Debt.objects
+            .exclude(is_paid=True)
+            .values(client_name=F('client__name'))
+            .annotate(
+                total_debt=Coalesce(Sum('total_amount'), 0),
+                total_paid=Coalesce(Sum('payments__amount'), 0),
+                deposit=Coalesce(Sum('deposit'), 0),
             )
-        ).order_by('-remaining_debt')
-        
-        debts_data = debts.values(
-            'client_name',
-            'total_debt',
-            'total_paid',
-            'remaining_debt',
-            'deposit',
+            .annotate(
+                remaining_debt=ExpressionWrapper(
+                    F('total_debt') - F('total_paid') - F('deposit'),
+                    output_field=DecimalField(max_digits=20, decimal_places=2)
+                )
+            )
+            .order_by('-remaining_debt')
         )
 
-        return Response(ClientDebtSerializer(debts_data, many=True).data)
+        return Response(ClientDebtSerializer(debts, many=True).data)
 
 
 class TopSellersView(APIView):
