@@ -192,14 +192,16 @@ class TopSellersView(APIView):
 class ExpenseSummaryView(APIView):
     permission_classes = [IsAdminUser]
 
-    def get(self,request):
+    def get(self, request):
         date_from, date_to = get_date_range_with_period(request)
-
         expenses = Expense.objects.filter(date__range=(date_from, date_to))
 
         total_expense = expenses.aggregate(total=Sum('amount'))['total'] or 0
+
         grouped = (
-            expenses.values('expense_name__name')
+            expenses
+            .values('expense_name__name')
+            .annotate(total_amount=Sum('amount'))
             .order_by('expense_name__name')
         )
 
@@ -207,6 +209,7 @@ class ExpenseSummaryView(APIView):
             "total_expense": total_expense,
             "expenses": list(grouped)
         })
+
 
 
 class SalesmanSummaryView(APIView):
