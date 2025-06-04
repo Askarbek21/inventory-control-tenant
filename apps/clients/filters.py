@@ -8,10 +8,11 @@ from .models import Client, BalanceHistory
 
 class ClientFilter(filters.FilterSet):
     type = filters.ChoiceFilter(choices=CLIENT_TYPE_CHOICES)
+    name = filters.CharFilter(lookup_expr='icontains')
 
     class Meta:
         model = Client 
-        fields = ['type']
+        fields = ['type', 'name']
 
 
 class ClientBalanceFilter(filters.FilterSet):
