@@ -96,4 +96,5 @@ def process_sale(sale: Sale):
             total_amount=credit_amount
         )
         sale.on_credit = True
+        sale.is_paid = False
         sale.save(update_fields=['on_credit'])

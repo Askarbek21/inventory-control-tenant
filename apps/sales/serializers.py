@@ -142,9 +142,12 @@ class SaleSerializer(serializers.ModelSerializer):
                 ))
             
             SaleItem.objects.bulk_create(item_instances)
+        
+        new_sale.total_amount = total_amount or new_sale.get_total_amount()
 
         if on_credit:
             Debt.objects.create(sale=new_sale, store=new_sale.store, total_amount=new_sale.total_amount,**sale_debt)
+            new_sale.is_paid = False
 
         if sale_payments is not None:
             payments_lst = [SalePayment(sale=new_sale, **payment) 
@@ -152,8 +155,6 @@ class SaleSerializer(serializers.ModelSerializer):
             ]
             SalePayment.objects.bulk_create(payments_lst)
         
-        new_sale.total_amount = total_amount or new_sale.get_total_amount()
-        new_sale.is_paid = False if on_credit else True
         new_sale.save()
         
         process_sale(new_sale)
@@ -175,6 +176,11 @@ class SaleSerializer(serializers.ModelSerializer):
 
         return instance
 
+    def to_representation(self, instance):
+        repr = super().to_representation(instance)
+        if not repr['on_credit']:
+            repr.pop('is_paid')
+        return repr
         
 
 

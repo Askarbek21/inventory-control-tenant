@@ -1,3 +1,4 @@
+from datetime import datetime
 from django_filters import rest_framework as filters
 
 from apps.stores.models import Store
@@ -11,8 +12,8 @@ class SaleFilter(filters.FilterSet):
         to_field_name='id'
     )
     product = filters.CharFilter(method='filter_by_product')
-    start_date = filters.DateFilter(field_name='sold_date', lookup_expr='gte')
-    end_date = filters.DateFilter(field_name='sold_date', lookup_expr='lte')
+    start_date = filters.DateFilter(method='filter_start_date')
+    end_date = filters.DateFilter(method='filter_end_date')
     on_credit = filters.BooleanFilter(field_name='on_credit')
 
     class Meta:
@@ -21,3 +22,9 @@ class SaleFilter(filters.FilterSet):
     
     def filter_by_product(self, queryset, name, value):
         return queryset.filter(sale_items__stock__product__id=value).distinct()
+    
+    def filter_start_date(self, queryset, name, value):
+        return queryset.filter(sold_date__gte=datetime.combine(value, datetime.min.time()))
+
+    def filter_end_date(self, queryset, name, value):
+        return queryset.filter(sold_date__lte=datetime.combine(value, datetime.max.time()))

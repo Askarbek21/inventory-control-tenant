@@ -2,7 +2,7 @@ from django.db.models import Sum
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAuthenticated
 from .serializers import ItemsDashboardSerializer
 from ..items.models import Product, Stock
 
@@ -10,7 +10,7 @@ from ..items.models import Product, Stock
 # Create your views here.
 
 class ItemsDashboardAPIView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated]
     serializer_class = ItemsDashboardSerializer
 
     def get(self, request):
@@ -22,7 +22,7 @@ class ItemsDashboardAPIView(APIView):
             'id', 'product',
             'quantity', 'quantity_for_history',
             'store', 'supplier', 'date_of_arrived'
-        ).filter(store__owner=request.user.id)
+        ).filter(store=request.user.store)
 
         total_product = stock.count()
         info_products = (
