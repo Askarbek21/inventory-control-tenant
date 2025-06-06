@@ -89,3 +89,21 @@ class DebtInSaleSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('Некорректная дата')
 
         return attrs
+
+
+class ClientDebtSerializer(serializers.ModelSerializer):
+    total_amount = serializers.DecimalField(max_digits=20, decimal_places=2)
+    total_deposit = serializers.DecimalField(max_digits=20, decimal_places=2)
+
+    class Meta:
+        model = Client 
+        fields = ['id', 'type', 'name', 'ceo_name', 'phone_number', 'address', 'balance', 'total_amount', 'total_deposit']
+    
+    def to_representation(self, instance):
+        repr = super().to_representation(instance)
+
+        if repr['type'] == 'Физ.лицо':
+            repr.pop('ceo_name')
+            repr.pop('balance')
+
+        return repr

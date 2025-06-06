@@ -1,7 +1,9 @@
-from rest_framework import viewsets 
+from django.db.models import Sum 
+from rest_framework import viewsets, generics
 from rest_framework.permissions import IsAuthenticated
 
 from config.permissions import DebtPermission, DebtPaymentPermission
+from apps.clients.filters import ClientFilter
 from .serializers import *
 from .filters import DebtFilter, DebtPaymentFilter
 
@@ -29,3 +31,21 @@ class DebtPaymentViewset(viewsets.ModelViewSet):
     def get_serializer_context(self):
         context = {'request': self.request}
         return context
+
+
+class DebtsGroupedByClientView(generics.ListAPIView):
+    serializer_class = ClientDebtSerializer
+    filterset_class = ClientFilter
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        store = self.request.user.store
+        return (
+            Client.objects
+            .filter(client_debts__store=store)
+            .annotate(
+                total_amount=Sum('client_debts__total_amount'),
+                total_deposit=Sum('client_debts__deposit'),
+            )
+            .order_by('-total_amount')
+        )
