@@ -148,9 +148,21 @@ class ClientDebtView(APIView):
             .exclude(is_paid=True)
             .values(client_name=F('client__name'))
             .annotate(
-                total_debt=Coalesce(Sum('total_amount'), 0),
-                total_paid=Coalesce(Sum('payments__amount'), 0),
-                deposit=Coalesce(Sum('deposit'), 0),
+                total_debt=Coalesce(
+                    Sum('total_amount'),
+                    0,
+                    output_field=DecimalField(max_digits=20, decimal_places=2)
+                ),
+                total_paid=Coalesce(
+                    Sum('payments__amount'),
+                    0,
+                    output_field=DecimalField(max_digits=20, decimal_places=2)
+                ),
+                deposit=Coalesce(
+                    Sum('deposit'),
+                    0,
+                    output_field=DecimalField(max_digits=20, decimal_places=2)
+                ),
             )
             .annotate(
                 remaining_debt=ExpressionWrapper(
