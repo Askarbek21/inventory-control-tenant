@@ -42,7 +42,7 @@ class DebtsGroupedByClientView(generics.ListAPIView):
         store = self.request.user.store
         return (
             Client.objects
-            .filter(client_debts__store=store)
+            .filter(client_debts__store=store, client_debts__is_paid=False)
             .annotate(
                 total_amount=Sum('client_debts__total_amount'),
                 total_deposit=Sum('client_debts__deposit'),
