@@ -3,6 +3,7 @@ from rest_framework import viewsets, generics
 from rest_framework.permissions import IsAuthenticated
 
 from config.permissions import DebtPermission, DebtPaymentPermission
+from config.pagination import CustomPageNumberPagination
 from apps.clients.filters import ClientFilter
 from .serializers import *
 from .filters import DebtFilter, DebtPaymentFilter
@@ -10,6 +11,7 @@ from .filters import DebtFilter, DebtPaymentFilter
 
 class DebtViewset(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, DebtPermission]
+    pagination_class = CustomPageNumberPagination
     serializer_class = DebtSerializer
     filterset_class = DebtFilter
 
@@ -35,6 +37,7 @@ class DebtPaymentViewset(viewsets.ModelViewSet):
 
 class DebtsGroupedByClientView(generics.ListAPIView):
     serializer_class = ClientDebtSerializer
+    pagination_class = CustomPageNumberPagination
     filterset_class = ClientFilter
     permission_classes = [IsAuthenticated]
 

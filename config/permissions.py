@@ -151,3 +151,10 @@ class TransferPermission(permissions.BasePermission):
         if request.user.is_superuser:
             return True 
         return obj.from_stock.store == request.user.store
+
+
+class IsAdministrator(permissions.BasePermission):
+    def has_permission(self, request, view):
+        if request.user.is_superuser or request.user.role == 'Администратор':
+            return True 
+        return False

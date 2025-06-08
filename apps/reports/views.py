@@ -3,8 +3,9 @@ from django.db.models.functions import Cast, TruncDate, Coalesce, TruncMonth
 from django.utils.timezone import now, timedelta
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 
+from config.permissions import IsAdministrator
 from apps.sales.models import Sale, SaleItem, Stock
 from apps.debts.models import Debt
 from apps.items.models import Product
@@ -14,12 +15,18 @@ from .utils import get_date_range_with_period
 
 
 class SalesSummaryView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdministrator]
     
     def get(self, request):
         date_from, date_to = get_date_range_with_period(request)
+        store = request.query_params.get('store')
+        user = request.user
 
         sales = Sale.objects.filter(sold_date__range=(date_from, date_to), is_paid=True)
+        if store and user.is_superuser:
+            sales = sales.filter(store=store)
+        if not user.is_superuser:
+            sales = sales.filter(store=user.store)
         total_revenue = sales.aggregate(total=Sum('total_amount'))['total'] or 0
         total_sales = sales.count()
 
@@ -35,12 +42,19 @@ class SalesSummaryView(APIView):
 
 
 class TopProductsView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdministrator]
     def get(self, request):
         date_from, date_to = get_date_range_with_period(request)
+        store = request.query_params.get('store')
+        user = request.user
         limit = int(request.query_params.get('limit', 5))
 
-        items = SaleItem.objects.filter(sale__sold_date__range=(date_from, date_to)).values(
+        items = SaleItem.objects.filter(sale__sold_date__range=(date_from, date_to))
+        if store and user.is_superuser:
+            items = items.filter(sale__store=store)
+        if not user.is_superuser:
+            items = items.filter(sale__store=user.store)
+        items = items.values(
             product_name=F('stock__product__product_name')
         ).annotate(
             total_quantity=Sum('quantity'),
@@ -51,15 +65,22 @@ class TopProductsView(APIView):
 
 
 class UnsoldProductsView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdministrator]
 
     def get(self, request):
         days = int(request.query_params.get('days', 30))
         cutoff = now() - timedelta(days=days)
+        store = request.query_params.get('store')
+        user = request.user
 
         sold_product_ids = SaleItem.objects.filter(
             sale__sold_date__gte=cutoff
-        ).values_list('stock__product_id', flat=True)
+        )
+        if store and user.is_superuser:
+            sold_product_ids = sold_product_ids.filter(sale__store=store)
+        if not user.is_superuser:
+            sold_product_ids = sold_product_ids.filter(sale__store=user.store)
+        sold_product_ids = sold_product_ids.values_list('stock__product_id', flat=True)
 
         unsold_products = Product.objects.exclude(id__in=sold_product_ids)
 
@@ -69,9 +90,16 @@ class UnsoldProductsView(APIView):
 
 
 class StockByCategoryView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdministrator]
     def get(self, request):
-        stocks = Stock.objects.values(
+        store = request.query_params.get('store')
+        user = request.user
+        stocks = Stock.objects.all()
+        if store and user.is_superuser:
+            stocks = stocks.filter(store=store)
+        if not user.is_superuser:
+            stocks = stocks.filter(store=user.store)
+        stocks = stocks.values(
             category=F('product__category__category_name')
         ).annotate(
             total_stock=Sum('quantity')
@@ -81,13 +109,18 @@ class StockByCategoryView(APIView):
 
 
 class ProductIntakeView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdministrator]
 
     def get(self, request):
         date_from, date_to = get_date_range_with_period(request)
+        store = request.query_params.get('store')
+        user = request.user
 
         stocks = Stock.objects.filter(date_of_arrived__range=(date_from, date_to))
-
+        if store and user.is_superuser:
+            stocks = stocks.filter(store=store)
+        if not user.is_superuser:
+            stocks = stocks.filter(store=user.store)
         stocks = stocks.annotate(
             total_value=ExpressionWrapper(
                 F('quantity') * F('purchase_price_in_uz'),
@@ -116,11 +149,18 @@ class ProductIntakeView(APIView):
 
 
 class ProductProfitabilityView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdministrator]
 
     def get(self, request):
+        store = request.query_params.get('store')
+        user = request.user
 
-        items = SaleItem.objects.filter(sale__is_paid=True).select_related('stock__product').values(
+        items = SaleItem.objects.filter(sale__is_paid=True).select_related('stock__product')
+        if store and user.is_superuser:
+            items = items.filter(sale__store=store)
+        if not user.is_superuser:
+            items = items.filter(sale__store=user.store)
+        items.values(
             product_name=F('stock__product__product_name')
         ).annotate(
             revenue=Sum('subtotal'),
@@ -140,52 +180,63 @@ class ProductProfitabilityView(APIView):
 
 
 class ClientDebtView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdministrator]
 
     def get(self, request):
-        debts = (
-            Debt.objects
-            .exclude(is_paid=True)
-            .values(client_name=F('client__name'))
-            .annotate(
-                total_debt=Coalesce(
-                    Sum('total_amount'),
-                    0,
-                    output_field=DecimalField(max_digits=20, decimal_places=2)
-                ),
-                total_paid=Coalesce(
-                    Sum('payments__amount'),
-                    0,
-                    output_field=DecimalField(max_digits=20, decimal_places=2)
-                ),
-                deposit=Coalesce(
-                    Sum('deposit'),
-                    0,
-                    output_field=DecimalField(max_digits=20, decimal_places=2)
-                ),
+        store = request.query_params.get('store')
+        user = request.user
+        debts = Debt.objects.exclude(is_paid=True)
+        
+        if store and user.is_superuser:
+            debts = debts.filter(store=store)
+        if not user.is_superuser:
+            debts = debts.filter(store=user.store)
+            
+        debts = debts.values(
+            client_name=F('client__name')
+        ).annotate(
+            total_debt=Coalesce(
+                Sum('total_amount'),
+                0,
+                output_field=DecimalField(max_digits=20, decimal_places=2)
+            ),
+            total_paid=Coalesce(
+                Sum('payments__amount'),
+                0,
+                output_field=DecimalField(max_digits=20, decimal_places=2)
+            ),
+            deposit=Coalesce(
+                Sum('deposit'),
+                0,
+                output_field=DecimalField(max_digits=20, decimal_places=2)
+            ),
+        ).annotate(
+            remaining_debt=ExpressionWrapper(
+                F('total_debt') - F('total_paid') - F('deposit'),
+                output_field=DecimalField(max_digits=20, decimal_places=2)
             )
-            .annotate(
-                remaining_debt=ExpressionWrapper(
-                    F('total_debt') - F('total_paid') - F('deposit'),
-                    output_field=DecimalField(max_digits=20, decimal_places=2)
-                )
-            )
-            .order_by('-remaining_debt')
-        )
+        ).order_by('-remaining_debt')
 
         return Response(ClientDebtSerializer(debts, many=True).data)
 
 
 class TopSellersView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdministrator]
 
     def get(self, request):
+        store = request.query_params.get('store')
         date_from, date_to = get_date_range_with_period(request)
+        user = request.user
 
         sellers = Sale.objects.filter(
             sold_date__range=(date_from, date_to),
             is_paid=True
-        ).values(
+        )
+        if store and user.is_superuser:
+            sellers = sellers.filter(store=store)
+        if not user.is_superuser:
+            sellers = sellers.filter(store=user.store)
+        sellers.values(
             store_name = F('store__name'),
             seller_name=F('sold_by__name'),
             seller_phone=F('sold_by__phone_number')
@@ -198,12 +249,17 @@ class TopSellersView(APIView):
 
 
 class ExpenseSummaryView(APIView):
-    permission_classes = [IsAdminUser]
+    permission_classes = [IsAuthenticated, IsAdministrator]
 
     def get(self, request):
+        store = request.query_params.get('store')
         date_from, date_to = get_date_range_with_period(request)
+        user = request.user
         expenses = Expense.objects.filter(date__range=(date_from, date_to))
-
+        if store and user.is_superuser:
+            expenses = expenses.filter(store=store)
+        if not user.is_superuser:
+            expenses = expenses.filter(store=user.store)
         total_expense = expenses.aggregate(total=Sum('amount'))['total'] or 0
 
         grouped = (

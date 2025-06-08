@@ -1,6 +1,7 @@
 from django.utils.dateparse import parse_datetime
 from django.utils.timezone import now, timedelta
 
+
 def get_date_range_with_period(request, default_period="day"):
 
     today = now()
