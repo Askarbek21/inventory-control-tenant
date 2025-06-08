@@ -1,42 +1,49 @@
-from django.db.models import Sum
-from django.shortcuts import render
 from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import ListAPIView
+from django.db.models import Sum
+from django_filters.rest_framework import DjangoFilterBackend
+from .filters import StockDashboardFilter
+from config.pagination import CustomPageNumberPagination
 from .serializers import ItemsDashboardSerializer
 from ..items.models import Product, Stock
+class ItemsDashboardAPIView(ListAPIView):
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = StockDashboardFilter
+    pagination_class = CustomPageNumberPagination
 
-
-# Create your views here.
-
-class ItemsDashboardAPIView(APIView):
-    serializer_class = ItemsDashboardSerializer
-
-    def get(self, request):
-        stock = Stock.objects.select_related(
-            "product",
-            "store",
-            "supplier",
+    def get_queryset(self):
+        qs = Stock.objects.select_related(
+            "product", "store", "supplier"
         ).only(
             'id', 'product',
             'quantity', 'quantity_for_history',
             'store', 'supplier', 'date_of_arrived'
         )
-        if request.user.is_superuser:
-            stock = stock.all()
-            total_product = stock.count()
-            info_products = (
-                stock.values('product__product_name', 'store__name').annotate(total_quantity=Sum('quantity'))
-            )
-        elif request.user.role == 'Администратор' or request.user.role == 'Продавец':
-            stock = stock.filter(store=request.user.store)
+        if self.request.user.is_superuser:
+            return qs.all()
+        elif self.request.user.role in ['Администратор', 'Продавец']:
+            return qs.filter(store=self.request.user.store)
+        else:
+            return qs.none()
 
-            total_product = stock.count()
-            info_products = (
-                stock.values('product__product_name', 'store__name').annotate(total_quantity=Sum('quantity'))
-            )
-        
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        filtered_queryset = self.filter_queryset(queryset)
+
+        total_product = filtered_queryset.count()
+
+        info_products = filtered_queryset.values(
+            'product__product_name', 'store__name'
+        ).annotate(total_quantity=Sum('quantity')).order_by('product__product_name')
+
+        page = self.paginate_queryset(info_products)
+        if page is not None:
+            return self.get_paginated_response({
+                "total_product": total_product,
+                "info_products": list(page),
+            })
+
         return Response({
             "total_product": total_product,
-            "info_products": info_products,
+            "info_products": list(info_products),
         })
