@@ -10,7 +10,6 @@ from ..items.models import Product, Stock
 # Create your views here.
 
 class ItemsDashboardAPIView(APIView):
-    permission_classes = [IsAuthenticated]
     serializer_class = ItemsDashboardSerializer
 
     def get(self, request):
@@ -22,14 +21,21 @@ class ItemsDashboardAPIView(APIView):
             'id', 'product',
             'quantity', 'quantity_for_history',
             'store', 'supplier', 'date_of_arrived'
-        ).filter(store=request.user.store)
-
-        total_product = stock.count()
-        info_products = (
-            stock.values('product__product_name', 'store__name').annotate(total_quantity=Sum('quantity'))
         )
-        total_product_name = stock.values('product').aggregate()
-        print(total_product_name)
+        if request.user.is_superuser:
+            stock = stock.all()
+            total_product = stock.count()
+            info_products = (
+                stock.values('product__product_name', 'store__name').annotate(total_quantity=Sum('quantity'))
+            )
+        elif request.user.role == 'Администратор' or request.user.role == 'Продавец':
+            stock = stock.filter(store=request.user.store)
+
+            total_product = stock.count()
+            info_products = (
+                stock.values('product__product_name', 'store__name').annotate(total_quantity=Sum('quantity'))
+            )
+        
         return Response({
             "total_product": total_product,
             "info_products": info_products,
