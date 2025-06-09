@@ -160,7 +160,7 @@ class ProductProfitabilityView(APIView):
             items = items.filter(sale__store=store)
         if not user.is_superuser:
             items = items.filter(sale__store=user.store)
-        items.values(
+        items = items.values(
             product_name=F('stock__product__product_name')
         ).annotate(
             revenue=Sum('subtotal'),
@@ -236,7 +236,7 @@ class TopSellersView(APIView):
             sellers = sellers.filter(store=store)
         if not user.is_superuser:
             sellers = sellers.filter(store=user.store)
-        sellers.values(
+        sellers = sellers.values(
             store_name = F('store__name'),
             seller_name=F('sold_by__name'),
             seller_phone=F('sold_by__phone_number')
@@ -245,7 +245,7 @@ class TopSellersView(APIView):
             total_sales=Count('id')
         ).order_by('-total_revenue')
 
-        return Response(sellers)
+        return Response(list(sellers))
 
 
 class ExpenseSummaryView(APIView):
