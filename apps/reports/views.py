@@ -1,4 +1,4 @@
-from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Count
+from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Count, Prefetch
 from django.db.models.functions import Cast, TruncDate, Coalesce, TruncMonth
 from django.utils.timezone import now, timedelta
 from rest_framework.views import APIView
@@ -307,4 +307,56 @@ class SalesmanDebtView(APIView):
             "total_count": count, 
             "total_debt": total_debt,
         })
+    
 
+class SalesProfitView(APIView):
+    permission_classes = [IsAuthenticated, IsAdministrator]
+    def get(self,request):
+        date_from, date_to = get_date_range_with_period(request)
+        store = request.query_params.get('store')
+        user = request.user
+
+        sales = Sale.objects.filter(sold_date__range=(date_from, date_to), is_paid=True)
+
+        if store and user.is_superuser:
+            sales = sales.filter(store=store)
+        if not user.is_superuser:
+            sales = sales.filter(store=user.store)
+        
+        total_sales = sales.count()
+        total_revenue = sales.aggregate(total=Sum('total_amount'))['total'] or 0
+
+        sale_items = SaleItem.objects.filter(
+            sale__in=sales
+        ).select_related(
+            'stock', 'stock__product', 'sale', 'sale__sold_by'
+        )
+        
+        total_pure_revenue = 0
+        sale_items_list = []
+        
+        for item in sale_items:
+            purchase_cost = item.stock.purchase_price_in_uz * item.quantity
+            item_profit = item.subtotal - purchase_cost
+            total_pure_revenue += item_profit
+            
+            sale_items_list.append({
+                'id': item.id,
+                'product_name': item.stock.product.product_name,
+                'quantity': item.quantity,
+                'selling_method': item.selling_method,
+                'subtotal': item.subtotal,
+                'sold_date': item.sale.sold_date,
+                'sold_by': item.sale.sold_by.name if item.sale.sold_by else None
+            })
+        
+        sale_items_list.sort(key=lambda x: x['sold_date'], reverse=True)
+        
+        response_data = {
+            'total_sales': total_sales,
+            'total_revenue': total_revenue,
+            'total_pure_revenue': total_pure_revenue,
+            'sale_items': sale_items_list,
+        }
+        
+        return Response(response_data)
