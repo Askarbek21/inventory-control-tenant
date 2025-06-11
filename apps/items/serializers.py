@@ -39,7 +39,7 @@ class ProductSerializer(ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'product_name', 'category_write', 'category_read', 'measurement', 'color', 'has_color',
-                  'history']
+                  'history', 'has_kub', 'kub']
 
     def create(self, validated_data):
         measurement_data = validated_data.pop('measurementproduct_set')
@@ -54,6 +54,7 @@ class ProductSerializer(ModelSerializer):
         for mt in measurement_data:
             MeasurementProduct.objects.create(product=product, **mt)
         return product
+
     def update(self, instance, validated_data):
         measurement_data = validated_data.pop('measurementproduct_set')
 
@@ -106,20 +107,28 @@ class StockSerializers(ModelSerializer):
                   'purchase_price_in_us',
                   'selling_price',
                   'min_price', "exchange_rate", 'quantity', 'quantity_for_history', 'history_of_prices',
-                  'supplier_read', 'supplier_write', 'date_of_arrived',
+                  'supplier_read', 'supplier_write', 'date_of_arrived', 'total_volume'
                   ]
 
     def create(self, validated_data):
-        print(validated_data)
         selling_price = float(validated_data.pop('selling_price', 0))
         min_price = float(validated_data.pop('min_price', 0))
         exchange_rate = float(validated_data.pop('exchange_rate', 0))
+        product_write = validated_data.pop('product', None)
         purchase_price_in_us = float(validated_data.pop('purchase_price_in_us', 0))
         purchase_price_in_uz = float(validated_data.pop('purchase_price_in_uz', 0))
         quantity = float(validated_data.pop('quantity', 0))
         date_of_arrived = validated_data.pop('date_of_arrived', None)
         supplier = validated_data.pop('supplier', None)
         store = validated_data.pop('store', None)
+        total_volume = validated_data.pop('total_volume', None)
+        product = Product.objects.get(id=product_write.id)
+
+        if product.has_kub == True:
+            total_volume = float(quantity) * product.kub
+        else:
+            total_volume = None
+
         history = {
             "purchase_price_in_us": purchase_price_in_us,
             "purchase_price_in_uz": purchase_price_in_uz,
@@ -127,6 +136,7 @@ class StockSerializers(ModelSerializer):
             "min_price": min_price,
             "exchange_rate": exchange_rate,
             "quantity": quantity,
+            "total_volume": total_volume,
             "date_of_arrived": f'{date_of_arrived}',
             "supplier": f'{supplier.name} - {supplier.phone_number}',
             "store": f'{store.name} - {store.phone_number}',
@@ -134,6 +144,8 @@ class StockSerializers(ModelSerializer):
 
         stock = Stock.objects.create(
             **validated_data,
+            product=product_write,
+
             history_of_prices=history,
             selling_price=selling_price,
             min_price=min_price,
@@ -144,7 +156,8 @@ class StockSerializers(ModelSerializer):
             quantity_for_history=quantity,
             date_of_arrived=date_of_arrived,
             store=store,
-            supplier=supplier
+            supplier=supplier,
+            total_volume=total_volume,
 
         )
 
@@ -157,6 +170,8 @@ class StockSerializers(ModelSerializer):
         purchase_price_in_us = float(validated_data.pop('purchase_price_in_us', instance.purchase_price_in_us))
         purchase_price_in_uz = float(validated_data.pop('purchase_price_in_uz', instance.purchase_price_in_uz))
         quantity = float(validated_data.pop('quantity', instance.quantity))
+        
+        instance.total_volume = quantity * instance.product.kub
 
         instance.selling_price = selling_price
         instance.min_price = min_price
