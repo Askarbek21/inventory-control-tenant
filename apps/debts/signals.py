@@ -27,10 +27,15 @@ def increment_store_budget(sender, instance, created, **kwargs):
 
 @receiver(post_save, sender=Debt)
 def update_related_sale(sender, instance, created, **kwargs):
-    sale = instance.sale 
+    sale = instance.sale
+    client = instance.client
     if created:
         return 
     if instance.is_paid:
         sale.is_paid = True
-        sale.save(update_fields=['is_paid']) 
+        sale.save(update_fields=['is_paid'])
+        if instance.from_client_balance:
+            client.balance += instance.total_amount
+            client.save(update_fields=['balance'])
+        return 
 

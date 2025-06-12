@@ -93,7 +93,8 @@ def process_sale(sale: Sale):
             sale=sale,
             store=store,
             client=client,
-            total_amount=credit_amount
+            total_amount=credit_amount,
+            from_client_balance=True,
         )
         sale.on_credit = True
         sale.is_paid = False

@@ -15,6 +15,7 @@ class Debt(models.Model):
     total_amount = models.DecimalField(max_digits=12, decimal_places=2)
     deposit = models.DecimalField(max_digits=12, decimal_places=2, null=True, default=0.0)
     is_paid = models.BooleanField(default=False)
+    from_client_balance = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

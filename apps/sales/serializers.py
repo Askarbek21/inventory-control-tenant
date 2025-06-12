@@ -75,6 +75,8 @@ class SaleSerializer(serializers.ModelSerializer):
         sale_payments = attrs.get('sale_payments', None)
         store = attrs.get('store', None)
         sold_by = attrs.get('sold_by', None)
+        deposit = sale_debt.get('deposit', None)
+        total_amount = attrs.get('total_amount', None)
 
         if on_credit and not sale_debt:
             raise serializers.ValidationError({
@@ -95,6 +97,12 @@ class SaleSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({
                 'Данный работник не работает в выбранном магазине'
             })
+        
+        if sale_debt:
+            if deposit and deposit >= total_amount:
+                raise serializers.ValidationError({
+                    'Депозит не может превышать сумму долга'
+                })
 
         return attrs
 

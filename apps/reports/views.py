@@ -1,4 +1,4 @@
-from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Count, Prefetch
+from django.db.models import Sum, F, DecimalField, ExpressionWrapper, Count
 from django.db.models.functions import Cast, TruncDate, Coalesce, TruncMonth
 from django.utils.timezone import now, timedelta
 from rest_framework.views import APIView
@@ -336,7 +336,8 @@ class SalesProfitView(APIView):
         sale_items_list = []
         
         for item in sale_items:
-            purchase_cost = item.stock.purchase_price_in_uz * item.quantity
+            per_unit_cost = item.stock.purchase_price_in_uz / item.stock.quantity_for_history
+            purchase_cost = per_unit_cost * item.quantity
             item_profit = item.subtotal - purchase_cost
             total_pure_revenue += item_profit
             
