@@ -6,6 +6,8 @@ from .filters import StockDashboardFilter
 from config.pagination import CustomPageNumberPagination
 from .serializers import ItemsDashboardSerializer
 from ..items.models import Product, Stock
+
+
 class ItemsDashboardAPIView(ListAPIView):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = StockDashboardFilter
@@ -34,7 +36,8 @@ class ItemsDashboardAPIView(ListAPIView):
 
         info_products = filtered_queryset.values(
             'product__product_name', 'store__name'
-        ).annotate(total_quantity=Sum('quantity')).order_by('product__product_name')
+        ).annotate(total_quantity=Sum('quantity'), total_kub_volume=Sum("total_volume")).order_by(
+            'product__product_name')
 
         page = self.paginate_queryset(info_products)
         if page is not None:
