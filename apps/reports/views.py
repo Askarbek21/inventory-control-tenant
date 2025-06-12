@@ -336,7 +336,7 @@ class SalesProfitView(APIView):
         sale_items_list = []
         
         for item in sale_items:
-            per_unit_cost = float(item.stock.purchase_price_in_uz) / float(item.stock.quantity)
+            per_unit_cost = float(item.stock.purchase_price_in_uz) / float(item.stock.quantity_for_history)
             purchase_cost = per_unit_cost * float(item.quantity)
             item_profit = float(item.subtotal) - purchase_cost
             total_pure_revenue += item_profit
