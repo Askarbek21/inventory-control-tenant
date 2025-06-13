@@ -8,3 +8,9 @@ from .models import *
 def after_delete_change_balance(sender, instance, **kwargs):
     instance.store.budget -= instance.amount
     instance.store.save()
+
+
+@receiver(post_delete, sender=CashInFlow)
+def change_balance_after_adding_money(sender, instance, **kwargs):
+    instance.store.budget -= instance.amount
+    instance.store.save()
