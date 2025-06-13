@@ -2,6 +2,7 @@ from django_filters import rest_framework as filters
 from .models import Measurement, Category, Supplier, Store, Stock, Product
 from django import forms
 
+
 class MeasurementFilter(filters.FilterSet):
     measurement_name = filters.CharFilter(field_name='measurement_name', lookup_expr='icontains')
 
@@ -24,8 +25,9 @@ class ProductFilter(filters.FilterSet):
     class Meta:
         model = Product
         fields = [
-            "color","category","product_name"
+            "color", "category", "product_name"
         ]
+
 
 class StockFilter(filters.FilterSet):
     date_of_arrived_gte = filters.DateFilter(
@@ -38,16 +40,8 @@ class StockFilter(filters.FilterSet):
         lookup_expr='lte',
         widget=forms.DateInput(attrs={'type': 'date'})
     )
+    product_name = filters.CharFilter(field_name='product__product_name', lookup_expr='icontains')
 
     class Meta:
         model = Stock
-        exclude = ['history_of_prices',
-
-                   "quantity",
-                   "purchase_price_in_us",
-                   "purchase_price_in_uz",
-                   "exchange_rate",
-                   "selling_price",
-                   "min_price",
-                   "color",
-                   ]
+        fields = ['product_name', "product", "store", "supplier", "date_of_arrived_gte", "date_of_arrived_lte"]
