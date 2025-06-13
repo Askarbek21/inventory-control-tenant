@@ -17,6 +17,6 @@ class Income(models.Model):
         ordering = ['-timestamp']
     
     def __str__(self):
-        return f'{self.source - self.timestamp}'
+        return f'{self.source} - {self.timestamp}'
     
 
