@@ -80,6 +80,7 @@ class RecyclingSerializer(ModelSerializer):
 
             history_of_prices=history,
             quantity=get_amount,
+            quantity_for_history=get_amount,
             store=store
         )
 
