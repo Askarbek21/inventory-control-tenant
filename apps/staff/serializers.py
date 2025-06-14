@@ -15,6 +15,22 @@ class UserSerializer(serializers.ModelSerializer):
         model = CustomUser 
         fields = ['id', 'name', 'password', 'phone_number', 'role', 'store_read', 'store_write','is_superuser']
 
+        def validate(self, attrs):
+            role = attrs.get('role')
+            store = attrs.get('store')
+            instance = self.instance 
+
+            if role == 'Администратор' and store:
+                qs = CustomUser.objects.filter(role='Administrator', store=store)
+                if instance:
+                    qs = qs.exclude(pk=instance.pk)
+                if qs.exists():
+                    raise serializers.ValidationError({
+                        f"У магазина уже есть администратор!"
+                    })
+
+            return attrs
+    
     def create(self, validated_data):
         try:
             new_user = CustomUser.objects.create_user(**validated_data)

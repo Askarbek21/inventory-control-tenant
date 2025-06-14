@@ -1,5 +1,5 @@
 from decimal import Decimal, ROUND_HALF_UP
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
 from django.db import transaction
 
@@ -31,6 +31,13 @@ def deduct_stock(instance):
         stock.quantity = quantity_decimal.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         stock.save(update_fields=['quantity'])
 
+
+@receiver(pre_delete, sender=Sale)
+def deduct_budget(sender, instance, **kwargs):
+    store = instance.store
+    with transaction.atomic():
+        store.budget -= instance.total_amount
+        store.save(update_fields=['budget'])
         
 
 

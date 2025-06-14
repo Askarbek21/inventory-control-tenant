@@ -7,7 +7,6 @@ class Store(models.Model):
     address = models.CharField(max_length=256, blank=True)
     phone_number = models.CharField(max_length=13, blank=True, unique=True)
     parent_store = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, related_name='children')
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='owned_stores')
     budget = models.DecimalField(max_digits=20, decimal_places=2, default=0)    
     created_at = models.DateTimeField(auto_now_add=True)
     is_main = models.BooleanField(default=False)

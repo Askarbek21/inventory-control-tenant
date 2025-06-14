@@ -1,5 +1,6 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_delete
 from django.dispatch import receiver
+from django.db import transaction
 
 from apps.incomes.models import Income
 from .models import DebtPayment, Debt
@@ -9,20 +10,21 @@ from .models import DebtPayment, Debt
 def increment_store_budget(sender, instance, created, **kwargs):
     store = instance.debt.store
     if created:
-        store.budget += instance.amount
-        store.save(update_fields=['budget'])
+        with transaction.atomic():
+            store.budget += instance.amount
+            store.save(update_fields=['budget'])
 
-        Income.objects.create(
-        store=store, 
-        source='Погашение долга',
-        worker=instance.worker,
-        description={
-            "Client": instance.debt.client.name,
-            "Amount": str(instance.amount),
-            "Payment Method": instance.payment_method,
-            "Timestamp": str(instance.paid_at),
-        }
-        )
+            Income.objects.create(
+            store=store, 
+            source='Погашение долга',
+            worker=instance.worker,
+            description={
+                "Client": instance.debt.client.name,
+                "Amount": str(instance.amount),
+                "Payment Method": instance.payment_method,
+                "Timestamp": str(instance.paid_at),
+            }
+            )
 
 
 @receiver(post_save, sender=Debt)
@@ -32,10 +34,18 @@ def update_related_sale(sender, instance, created, **kwargs):
     if created:
         return 
     if instance.is_paid:
-        sale.is_paid = True
-        sale.save(update_fields=['is_paid'])
-        if instance.from_client_balance:
-            client.balance += instance.total_amount
-            client.save(update_fields=['balance'])
-        return 
+        with transaction.atomic():
+            sale.is_paid = True
+            sale.save(update_fields=['is_paid'])
+            if instance.from_client_balance:
+                client.balance += instance.total_amount
+                client.save(update_fields=['balance'])
+            return 
 
+
+@receiver(pre_delete, sender=DebtPayment)
+def deduct_from_budget(sender, instance, **kwargs):
+    store = instance.debt.store 
+    with transaction.atomic():
+        store.budget -= instance.amount
+        store.save(update_fields=['budget'])

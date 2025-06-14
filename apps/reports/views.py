@@ -328,36 +328,20 @@ class SalesProfitView(APIView):
 
         sale_items = SaleItem.objects.filter(
             sale__in=sales
-        ).select_related(
-            'stock', 'stock__product', 'sale', 'sale__sold_by'
         )
         
         total_pure_revenue = 0
-        sale_items_list = []
         
         for item in sale_items:
             per_unit_cost = float(item.stock.purchase_price_in_uz) / float(item.stock.quantity_for_history)
             purchase_cost = per_unit_cost * float(item.quantity)
-            item_profit = purchase_cost - float(item.subtotal)
+            item_profit = float(item.subtotal) - purchase_cost
             total_pure_revenue += item_profit
-            
-            sale_items_list.append({
-                'id': item.id,
-                'product_name': item.stock.product.product_name,
-                'quantity': item.quantity,
-                'selling_method': item.selling_method,
-                'subtotal': item.subtotal,
-                'sold_date': item.sale.sold_date,
-                'sold_by': item.sale.sold_by.name if item.sale.sold_by else None
-            })
-        
-        sale_items_list.sort(key=lambda x: x['sold_date'], reverse=True)
         
         response_data = {
             'total_sales': total_sales,
             'total_revenue': total_revenue,
             'total_pure_revenue': total_pure_revenue,
-            'sale_items': sale_items_list,
         }
         
         return Response(response_data)

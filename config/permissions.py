@@ -136,7 +136,7 @@ class ExpensePermission(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
         if request.user.is_superuser:
             return True 
-        return obj.store.owner == request.user 
+        return obj.store == request.user 
 
 
 class TransferPermission(permissions.BasePermission):

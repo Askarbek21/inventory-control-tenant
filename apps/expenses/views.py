@@ -4,13 +4,14 @@ from rest_framework.viewsets import ModelViewSet
 from rest_framework.permissions import IsAuthenticated
 
 from config.pagination import CustomPageNumberPagination
-from config.permissions import ExpensePermission
+from config.permissions import ExpensePermission, IsAdministrator
 from .filters import ExpensesNameFilter, CashInFlowNameFilter, ExpensesFilter, CashInFlowFilter
 from .models import ExpenseName, CashInFlowName, Expense, CashInFlow
 from .serializers import ExpenseNameSerializer, CashInFlowNameSerializer, ExpenseSerializer, CashInFlowSerializer
 
 
 class ExpenseNameViewSet(ModelViewSet):
+    permission_classes = [IsAuthenticated, IsAdministrator]
     queryset = ExpenseName.objects.all()
     serializer_class = ExpenseNameSerializer
     pagination_class = CustomPageNumberPagination
@@ -19,6 +20,7 @@ class ExpenseNameViewSet(ModelViewSet):
 
 
 class CashInFlowNameViewSet(ModelViewSet):
+    permission_classes = [IsAuthenticated, IsAdministrator]
     queryset = CashInFlowName.objects.all()
     serializer_class = CashInFlowNameSerializer
     pagination_class = CustomPageNumberPagination
