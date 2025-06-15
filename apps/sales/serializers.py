@@ -65,7 +65,7 @@ class SaleSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'store_read', 'worker_read', 'client', 'store', 'sold_by',
             'on_credit', 'sale_items', 'sale_debt',
-            'total_amount', 'sale_payments', 'is_paid',
+            'total_amount', 'sale_payments', 'is_paid',"sold_date"
             ]
     
     def validate(self, attrs):
