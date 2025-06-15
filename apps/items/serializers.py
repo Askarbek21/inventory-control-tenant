@@ -61,8 +61,8 @@ class ProductSerializer(ModelSerializer):
         return product
 
     def update(self, instance, validated_data):
-        measurement_data = validated_data.pop('measurementproduct_set')
-        categories_for_recycling = validated_data.pop('categories_for_recycling', None)
+        measurement_data = validated_data.pop('measurementproduct_set', [])
+        categories_for_recycling = validated_data.pop('categories_for_recycling', [])
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
