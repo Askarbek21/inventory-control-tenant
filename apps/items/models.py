@@ -40,6 +40,10 @@ class Product(models.Model):
 
     color = models.CharField(max_length=199, null=True, blank=True)
     history = models.JSONField(null=True, blank=True)
+    has_recycling = models.BooleanField(default=False)
+    categories_for_recycling = models.ManyToManyField(Category, related_name='recycling_categories',
+                                                      blank=True,
+                                                      )
 
     def __str__(self):
         return self.product_name
