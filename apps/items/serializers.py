@@ -35,32 +35,38 @@ class ProductSerializer(ModelSerializer):
                                                         source='category')
     category_read = CategorySerializer(read_only=True, source='category')
     measurement = MeasurementProductSerializers(many=True, source='measurementproduct_set')
+    categories_for_recycling = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), many=True,
+                                                                  required=False)
 
     class Meta:
         model = Product
         fields = ['id', 'product_name', 'category_write', 'category_read', 'measurement', 'color', 'has_color',
-                  'history', 'has_kub', 'kub']
+                  'history', 'has_kub', 'kub', 'has_recycling', "categories_for_recycling"]
 
     def create(self, validated_data):
         measurement_data = validated_data.pop('measurementproduct_set')
-
+        categories_for_recycling = validated_data.pop('categories_for_recycling', None)
         product = Product.objects.create(**validated_data)
         category = product.category.category_name
         history = {
             "category": category,
         }
         product.history = history
+        if categories_for_recycling:
+            product.categories_for_recycling.set(categories_for_recycling)
         product.save()
+
         for mt in measurement_data:
             MeasurementProduct.objects.create(product=product, **mt)
         return product
 
     def update(self, instance, validated_data):
         measurement_data = validated_data.pop('measurementproduct_set')
-
+        categories_for_recycling = validated_data.pop('categories_for_recycling', None)
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
+        instance.categories_for_recycling.set(categories_for_recycling)
         for item in measurement_data:
             measurement = item['measurement']
             number = item['number']
@@ -170,7 +176,7 @@ class StockSerializers(ModelSerializer):
         purchase_price_in_us = float(validated_data.pop('purchase_price_in_us', instance.purchase_price_in_us))
         purchase_price_in_uz = float(validated_data.pop('purchase_price_in_uz', instance.purchase_price_in_uz))
         quantity = float(validated_data.pop('quantity', instance.quantity))
-        
+
         instance.total_volume = quantity * instance.product.kub
 
         instance.selling_price = selling_price
