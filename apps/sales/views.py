@@ -4,12 +4,13 @@ from rest_framework.permissions import IsAuthenticated
 from config.permissions import SalePermission
 from .serializers import *
 from .filters import SaleFilter
-
+from config.pagination import CustomPageNumberPagination
 
 class SaleViewset(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, SalePermission]
     serializer_class = SaleSerializer
     filterset_class = SaleFilter
+    pagination_class = CustomPageNumberPagination
 
     def get_serializer_context(self):
         context = {'request': self.request}
