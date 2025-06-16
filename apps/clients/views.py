@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 
 from config.permissions import ClientPermission
 from .serializers import *
-from .services import log_client_balance
+from .services import log_client_balance, pay_debts_from_balance
 from .filters import ClientFilter, ClientBalanceFilter
 
 
@@ -31,6 +31,7 @@ class ClientViewset(viewsets.ModelViewSet):
 
         old_balance = client.balance
         client.increment_balance(amount)
+        pay_debts_from_balance(client, worker=request.user)
         log_client_balance(client, old_balance, request=request, new_balance=client.balance)
 
         return response.Response({'msg': 'Баланс успешно пополнен', 'new_balance': str(client.balance)}, status.HTTP_200_OK)

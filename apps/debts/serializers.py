@@ -58,16 +58,9 @@ class DebtPaymentSerializer(serializers.ModelSerializer):
     
     @transaction.atomic()
     def create(self, validated_data):
-        debt = validated_data.get('debt')
         user = self.context['request'].user
-
+        
         new_payment = DebtPayment.objects.create(worker=user, **validated_data)
-        
-        total_paid = debt.payments.aggregate(total=models.Sum('amount'))['total'] or 0
-        
-        if total_paid >= debt.total_amount - debt.deposit:
-            debt.is_paid = True
-            debt.save(update_fields=['is_paid'])
 
         return new_payment
     

@@ -1,4 +1,5 @@
 from django.db.models.signals import post_save, pre_delete
+from django.db.models import Sum 
 from django.dispatch import receiver
 from django.db import transaction
 
@@ -7,24 +8,34 @@ from .models import DebtPayment, Debt
 
 
 @receiver(post_save, sender=DebtPayment)
-def increment_store_budget(sender, instance, created, **kwargs):
-    store = instance.debt.store
-    if created:
-        with transaction.atomic():
-            store.budget += instance.amount
-            store.save(update_fields=['budget'])
+def handle_debt_payment(sender, instance, created, **kwargs):
+    if not created:
+        return
 
-            Income.objects.create(
-            store=store, 
+    debt = instance.debt
+    client = debt.client
+    store = debt.store
+
+    with transaction.atomic():
+        store.budget += instance.amount
+        store.save(update_fields=['budget'])
+
+        Income.objects.create(
+            store=store,
             source='Погашение долга',
             worker=instance.worker,
             description={
-                "Client": instance.debt.client.name,
+                "Client": client.name,
                 "Amount": str(instance.amount),
                 "Payment Method": instance.payment_method,
                 "Timestamp": str(instance.paid_at),
             }
-            )
+        )
+
+        total_paid = debt.payments.aggregate(total=Sum('amount'))['total'] or 0
+        if total_paid >= debt.total_amount and not debt.is_paid:
+            debt.is_paid = True
+            debt.save(update_fields=['is_paid'])
 
 
 @receiver(post_save, sender=Debt)
@@ -37,7 +48,7 @@ def update_related_sale(sender, instance, created, **kwargs):
         with transaction.atomic():
             sale.is_paid = True
             sale.save(update_fields=['is_paid'])
-            if instance.from_client_balance:
+            if instance.from_client_balance and client.balance < 0:
                 client.balance += instance.total_amount
                 client.save(update_fields=['balance'])
             return 
