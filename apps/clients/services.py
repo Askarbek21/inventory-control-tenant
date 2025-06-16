@@ -16,7 +16,7 @@ def log_client_balance(client, old_balance, new_balance, request):
 
 
 def pay_debts_from_balance(client, worker=None):
-    if client.type != 'Юр.лицо' or client.balance <= 0:
+    if client.type != 'Юр.лицо':
         return
 
     unpaid_debts = Debt.objects.filter(client=client, is_paid=False).order_by('created_at')
@@ -36,7 +36,7 @@ def pay_debts_from_balance(client, worker=None):
         else:
             DebtPayment.objects.create(
                 debt=debt,
-                amount=client.balance,
+                amount=abs(client.balance),
                 payment_method='Перечисление',
                 worker=worker
             )
