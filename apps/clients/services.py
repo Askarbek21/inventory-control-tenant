@@ -16,31 +16,43 @@ def log_client_balance(client, old_balance, new_balance, request):
 
 
 def pay_debts_from_balance(client, worker=None):
-    if client.type != 'Юр.лицо':
+    if client.type != 'Юр.лицо' or client.balance >= 0:
         return
 
-    unpaid_debts = Debt.objects.filter(client=client, is_paid=False).order_by('created_at')
+    available_amount = abs(client.balance)
+    used_amount = Decimal('0.00')
 
-    for debt in unpaid_debts:
+    debts = Debt.objects.filter(
+        client=client,
+        is_paid=False,
+        from_client_balance=True
+    ).order_by('created_at')
+
+    for debt in debts:
         total_paid = debt.payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
         remaining = debt.total_amount - total_paid
 
-        if client.balance >= remaining:
+        if available_amount - used_amount >= remaining:
             DebtPayment.objects.create(
                 debt=debt,
                 amount=remaining,
                 payment_method='Перечисление',
                 worker=worker
             )
-            client.balance -= remaining
+            used_amount += remaining
         else:
+            partial = available_amount - used_amount
+            if partial <= 0:
+                break
             DebtPayment.objects.create(
                 debt=debt,
-                amount=abs(client.balance),
+                amount=partial,
                 payment_method='Перечисление',
                 worker=worker
             )
-            client.balance = Decimal('0.00')
+            used_amount += partial
             break
 
-    client.save(update_fields=['balance'])
+    if used_amount > 0:
+        client.balance += used_amount 
+        client.save(update_fields=['balance'])

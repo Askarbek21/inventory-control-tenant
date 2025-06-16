@@ -31,9 +31,9 @@ class ClientViewset(viewsets.ModelViewSet):
 
         old_balance = client.balance
         client.increment_balance(amount)
-        pay_debts_from_balance(client, worker=request.user)
         log_client_balance(client, old_balance, request=request, new_balance=client.balance)
-
+        pay_debts_from_balance(client, worker=request.user)
+        
         return response.Response({'msg': 'Баланс успешно пополнен', 'new_balance': str(client.balance)}, status.HTTP_200_OK)
 
 
