@@ -75,7 +75,7 @@ class TransferSerializer(ModelSerializer):
                                                to_stock=to_stock,
                                                stock=received_stock)
         else:
-            receiving_stock.quantity += amount
+            receiving_stock.quantity += float(amount)
             receiving_stock.save()
             transfer = Transfer.objects.create(**validated_data,
                                                amount=amount,
