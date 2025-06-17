@@ -15,8 +15,5 @@ class StoreViewset(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = StoreFilter
 
-    def get_queryset(self):
-        if self.request.user.is_superuser:
-            return Store.objects.all()
-        return Store.objects.filter(id=self.request.user.store.id)
+    queryset = Store.objects.all()
 
