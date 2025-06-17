@@ -14,6 +14,6 @@ class IncomeView(generics.ListAPIView):
     def get_queryset(self):
         if self.request.user.is_superuser:
             return Income.objects.select_related('store')
-        return Income.objects.filter(store=self.request.user).select_related('store')
+        return Income.objects.filter(store=self.request.user.store).select_related('store')
 
         

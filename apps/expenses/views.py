@@ -38,7 +38,7 @@ class ExpenseViewSet(ModelViewSet):
     def get_queryset(self):
         if self.request.user.is_superuser:
             return Expense.objects.all()
-        return Expense.objects.filter(store__owner=self.request.user)
+        return Expense.objects.filter(store=self.request.user.store)
     
 
 class CashInFlowViewSet(ModelViewSet):
@@ -51,4 +51,4 @@ class CashInFlowViewSet(ModelViewSet):
     def get_queryset(self):
         if self.request.user.is_superuser:
             return CashInFlow.objects.all()
-        return CashInFlow.objects.filter(store__owner=self.request.user)
+        return CashInFlow.objects.filter(store=self.request.user.store)
