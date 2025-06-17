@@ -72,12 +72,18 @@ class ProductSerializer(ModelSerializer):
             number = item['number']
             for_sale = item['for_sale']
 
-            obj, created = MeasurementProduct.objects.get_or_create(measurement=measurement, product=instance,
-                                                                    defaults={'number': number, "for_sale": for_sale})
-            if not created:
+            obj = MeasurementProduct.objects.filter(measurement=measurement, product=instance).first()
+            if obj:
                 obj.number = number
                 obj.for_sale = for_sale
                 obj.save()
+            else:
+                MeasurementProduct.objects.create(
+                    measurement=measurement,
+                    product=instance,
+                    number=number,
+                    for_sale=for_sale
+                )
 
         return instance
 
