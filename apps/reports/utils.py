@@ -1,9 +1,8 @@
+from datetime import datetime, timedelta
+from django.utils.timezone import now
 from django.utils.dateparse import parse_datetime
-from django.utils.timezone import now, timedelta
-
 
 def get_date_range_with_period(request, default_period="day"):
-
     today = now()
     period = request.query_params.get("period", default_period)
 
@@ -20,4 +19,8 @@ def get_date_range_with_period(request, default_period="day"):
     date_from = parse_datetime(date_from_str) if date_from_str else default_start
     date_to = parse_datetime(date_to_str) if date_to_str else today
 
+    if date_to and date_to.time() == datetime.min.time():
+        date_to = date_to.replace(hour=23, minute=59, second=59, microsecond=999999)
+
     return date_from, date_to
+
