@@ -98,4 +98,4 @@ def process_sale(sale: Sale):
         )
         sale.on_credit = True
         sale.is_paid = False
-        sale.save(update_fields=['on_credit'])
+        sale.save(update_fields=['on_credit', 'is_paid'])
