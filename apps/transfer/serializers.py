@@ -66,7 +66,7 @@ class TransferSerializer(ModelSerializer):
                 min_price=stock.min_price,
                 exchange_rate=stock.exchange_rate,
                 history_of_prices=stock.history_of_prices,
-          
+                quantity_for_history = amount,
                 supplier=stock.supplier,
             )
             transfer = Transfer.objects.create(**validated_data,
