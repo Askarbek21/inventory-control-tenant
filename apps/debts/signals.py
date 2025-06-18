@@ -2,7 +2,7 @@ from django.db.models.signals import post_save, pre_delete
 from django.db.models import Sum 
 from django.dispatch import receiver
 from django.db import transaction
-
+from decimal import Decimal
 from apps.incomes.models import Income
 from .models import DebtPayment, Debt
 
@@ -17,7 +17,7 @@ def handle_debt_payment(sender, instance, created, **kwargs):
     store = debt.store
 
     with transaction.atomic():
-        store.budget += instance.amount
+        store.budget += Decimal(instance.amount)
         store.save(update_fields=['budget'])
 
         Income.objects.create(
@@ -45,7 +45,7 @@ def update_related_sale(sender, instance, created, **kwargs):
     client = instance.client
 
     if created:
-        store.budget += instance.deposit
+        store.budget += Decimal(instance.deposit)
         store.save(update_fields=['budget'])
 
     if instance.is_paid:
@@ -53,7 +53,7 @@ def update_related_sale(sender, instance, created, **kwargs):
             sale.is_paid = True
             sale.save(update_fields=['is_paid'])
             if instance.from_client_balance and client.balance < 0:
-                client.balance += instance.total_amount
+                client.balance += Decimal(instance.total_amount)
                 client.save(update_fields=['balance'])
             return 
 
