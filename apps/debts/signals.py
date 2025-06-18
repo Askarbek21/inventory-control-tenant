@@ -33,17 +33,21 @@ def handle_debt_payment(sender, instance, created, **kwargs):
         )
 
         total_paid = debt.payments.aggregate(total=Sum('amount'))['total'] or 0
-        if total_paid >= debt.total_amount and not debt.is_paid:
+        if total_paid >= debt.total_amount - debt.deposit and not debt.is_paid:
             debt.is_paid = True
             debt.save(update_fields=['is_paid'])
 
 
 @receiver(post_save, sender=Debt)
 def update_related_sale(sender, instance, created, **kwargs):
+    store = instance.store 
     sale = instance.sale
     client = instance.client
+
     if created:
-        return 
+        store.budget += instance.deposit
+        store.save(update_fields=['budget'])
+
     if instance.is_paid:
         with transaction.atomic():
             sale.is_paid = True
@@ -59,4 +63,12 @@ def deduct_from_budget(sender, instance, **kwargs):
     store = instance.debt.store 
     with transaction.atomic():
         store.budget -= instance.amount
+        store.save(update_fields=['budget'])
+
+
+@receiver(pre_delete, sender=Debt)
+def debt_deduct_from_budget(sender, instance, **kwargs):
+    store = instance.store 
+    with transaction.atomic():
+        store.budget -= instance.deposit
         store.save(update_fields=['budget'])

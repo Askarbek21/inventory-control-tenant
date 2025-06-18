@@ -1,10 +1,15 @@
+from django.db.models import Q
 from rest_framework import serializers
 
 from apps.staff.serializers import UserSerializer
+from apps.stores.models import Store
 from .models import Client, BalanceHistory
 
 
 class ClientSerializer(serializers.ModelSerializer):
+    name = serializers.CharField()
+    phone_number = serializers.CharField()
+    stores = serializers.PrimaryKeyRelatedField(queryset=Store.objects.all(), many=True, write_only=True, required=False)
     class Meta:
         model = Client 
         fields = '__all__'
@@ -22,6 +27,20 @@ class ClientSerializer(serializers.ModelSerializer):
             repr.pop('balance')
 
         return repr
+    
+    def create(self, validated_data):
+        name = validated_data.get('name')
+        phone = validated_data.get('phone_number')
+        store = self.context['request'].user.store
+
+        client = Client.objects.filter(Q(name=name) | Q(phone_number=phone)).first()
+        if client:
+            client.stores.add(store)
+            return client
+
+        client = super().create(validated_data)
+        client.stores.add(store)
+        return client
     
     def update(self, instance, validated_data):
         validated_data.pop('type')

@@ -23,7 +23,8 @@ def pay_debts_from_balance(client, worker=None):
 
     for debt in unpaid_debts:
         total_paid = debt.payments.aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
-        remaining = debt.total_amount - total_paid
+        debt_deposit = debt.deposit or Decimal('0.00')
+        remaining = debt.total_amount - total_paid - debt_deposit
 
         if client.balance >= remaining:
             DebtPayment.objects.create(
@@ -41,7 +42,6 @@ def pay_debts_from_balance(client, worker=None):
                 payment_method='Перечисление',
                 worker=worker
             )
-            client.balance = Decimal('0.00')
             break
 
     client.save(update_fields=['balance'])

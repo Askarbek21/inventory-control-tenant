@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import Q 
 from rest_framework import viewsets, generics, response, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
@@ -14,7 +15,12 @@ class ClientViewset(viewsets.ModelViewSet):
     lookup_url_kwarg = 'client_pk'
     serializer_class = ClientSerializer
     filterset_class = ClientFilter
-    queryset = Client.objects.all()
+    
+    def get_queryset(self):
+        if self.request.user.is_superuser:
+            return Client.objects.all()
+        return Client.objects.filter(stores=self.request.user.store)
+
 
     @action(detail=True, methods=['POST'], url_path='increment-balance')
     @transaction.atomic()
@@ -32,7 +38,7 @@ class ClientViewset(viewsets.ModelViewSet):
         old_balance = client.balance
         client.increment_balance(amount)
         log_client_balance(client, old_balance, request=request, new_balance=client.balance)
-        pay_debts_from_balance(client, worker=request.user)
+        #pay_debts_from_balance(client, worker=request.user)
         
         return response.Response({'msg': 'Баланс успешно пополнен', 'new_balance': str(client.balance)}, status.HTTP_200_OK)
 

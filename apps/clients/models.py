@@ -2,6 +2,7 @@ from decimal import Decimal
 from django.db import models
 
 from apps.staff.models import CustomUser
+from apps.stores.models import Store
 from config.constants import CLIENT_TYPE_CHOICES, BALANCE_HISTORY_TYPE_CHOICES
 
 
@@ -12,6 +13,7 @@ class Client(models.Model):
     phone_number = models.CharField(max_length=13, unique=True)
     address = models.CharField(max_length=64, blank=True, null=True)
     balance = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    stores = models.ManyToManyField(Store, related_name='store_clients')
 
     class Meta:
         db_table = 'clients'
