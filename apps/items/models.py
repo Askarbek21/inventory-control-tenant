@@ -44,6 +44,9 @@ class Product(models.Model):
     categories_for_recycling = models.ManyToManyField(Category, related_name='recycling_categories',
                                                       blank=True,
                                                       )
+    is_list = models.BooleanField(default=False)
+    length = models.FloatField(max_length=199, null=True, blank=True)
+    static_weight = models.FloatField(max_length=199, null=True, blank=True)
 
     def __str__(self):
         return self.product_name
@@ -83,6 +86,8 @@ class Stock(models.Model):
     history_of_prices = models.JSONField(default=dict)
     supplier = models.ForeignKey(Supplier, on_delete=models.CASCADE, null=True, blank=True)
     total_volume = models.FloatField(max_length=199, null=True, blank=True)
+
+    income_weight = models.FloatField(max_length=199, null=True, blank=True)
 
     def __str__(self):
         return f'{self.product.product_name} -- {self.store.name}'
