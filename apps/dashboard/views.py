@@ -38,15 +38,19 @@ class ItemsDashboardAPIView(ListAPIView):
             'product__product_name', 'store__name'
         ).annotate(total_quantity=Sum('quantity'), total_kub_volume=Sum("total_volume")).order_by(
             'product__product_name')
+        total_volume = filtered_queryset.aggregate(Sum('total_volume'))
 
         page = self.paginate_queryset(info_products)
         if page is not None:
             return self.get_paginated_response({
                 "total_product": total_product,
                 "info_products": list(page),
+                "total_volume": total_volume['total_volume__sum'] or 0
+
             })
 
         return Response({
             "total_product": total_product,
             "info_products": list(info_products),
+            "total_volume": total_volume['total_volume__sum'] or 0
         })
