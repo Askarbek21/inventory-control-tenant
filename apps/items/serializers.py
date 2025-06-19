@@ -140,7 +140,7 @@ class StockSerializers(ModelSerializer):
         total_volume = validated_data.pop('total_volume', None)
         product = Product.objects.get(id=product_write.id)
 
-        if product.has_kub == True:
+        if product.has_kub and product.kub is not None:
             total_volume = float(quantity) * product.kub
         else:
             total_volume = None
@@ -187,7 +187,10 @@ class StockSerializers(ModelSerializer):
         purchase_price_in_uz = float(validated_data.pop('purchase_price_in_uz', instance.purchase_price_in_uz))
         quantity = float(validated_data.pop('quantity', instance.quantity))
 
-        instance.total_volume = quantity * instance.product.kub
+        if instance.product.has_kub and instance.product.kub is not None:
+            instance.total_volume = quantity * instance.product.kub
+        else:
+            instance.total_volume = None
 
         instance.selling_price = selling_price
         instance.min_price = min_price
