@@ -122,7 +122,7 @@ DATABASE_ROUTERS = (
     'django_tenants.routers.TenantSyncRouter',
 )
 
-TENANT_MODEL = "tenants.Client"
+TENANT_MODEL = "tenants.Customer"
 TENANT_DOMAIN_MODEL = "tenants.Domain" 
 
 SIMPLE_JWT = {
