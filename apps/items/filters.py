@@ -41,7 +41,14 @@ class StockFilter(filters.FilterSet):
         widget=forms.DateInput(attrs={'type': 'date'})
     )
     product_name = filters.CharFilter(field_name='product__product_name', lookup_expr='icontains')
+    prdouct_zero = filters.BooleanFilter(method='filter_quantity', label='Только товары с нулевым остатком')
+
+    def filter_quantity(self, queryset, name, value):
+        if value:
+            return queryset.filter(quantity=0)
+        return queryset
 
     class Meta:
         model = Stock
-        fields = ['product_name', "product", "store", "supplier", "date_of_arrived_gte", "date_of_arrived_lte"]
+        fields = ['product_name', "product", "store", "supplier", "date_of_arrived_gte", "date_of_arrived_lte",
+                  'prdouct_zero']
