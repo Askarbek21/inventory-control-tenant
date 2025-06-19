@@ -7,7 +7,7 @@ ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="127.0.0.1,localhost", cast=Csv(
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django_tenants.postgresql_backend',
         'NAME': config('DB_NAME'),
         'PASSWORD': config('DB_PASSWORD'),
         'USER': config('DB_USER'),
