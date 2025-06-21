@@ -164,10 +164,10 @@ class ProductProfitabilityView(APIView):
             product_name=F('stock__product__product_name')
         ).annotate(
             revenue=Sum('subtotal'),
-            cost=Sum(ExpressionWrapper(F('stock__purchase_price_in_uz') * F('quantity'), output_field=DecimalField(max_digits=20, decimal_places=2))),
+            cost=Sum(ExpressionWrapper(F('stock__purchase_price_in_uz') * F('quantity'), output_field=DecimalField(max_digits=40, decimal_places=2))),
         ).annotate(
             profit=F('revenue') - F('cost'),
-            margin=ExpressionWrapper(Cast(F('profit'), DecimalField(max_digits=25, decimal_places=2)) *100 / Cast(F('revenue'), DecimalField(max_digits=20, decimal_places=2)), output_field=DecimalField(max_digits=20, decimal_places=2))
+            margin=ExpressionWrapper(Cast(F('profit'), DecimalField(max_digits=45, decimal_places=2)) *100 / Cast(F('revenue'), DecimalField(max_digits=40, decimal_places=2)), output_field=DecimalField(max_digits=40, decimal_places=2))
         )
 
         sort = request.query_params.get('sort', 'profit')

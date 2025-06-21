@@ -21,9 +21,9 @@ class ProductIntakeSerializer(serializers.Serializer):
 
 class ProductProfitabilitySerializer(serializers.Serializer):
     product_name = serializers.CharField()
-    revenue = serializers.DecimalField(max_digits=12, decimal_places=2)
-    cost = serializers.DecimalField(max_digits=12, decimal_places=2)
-    profit = serializers.DecimalField(max_digits=12, decimal_places=2)
+    revenue = serializers.DecimalField(max_digits=40, decimal_places=2)
+    cost = serializers.DecimalField(max_digits=40, decimal_places=2)
+    profit = serializers.DecimalField(max_digits=40, decimal_places=2)
     margin = serializers.FloatField()
 
 class ClientDebtSerializer(serializers.Serializer):
