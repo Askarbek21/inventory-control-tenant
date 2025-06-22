@@ -14,7 +14,7 @@ class Category(models.Model):
 
     class Meta:
         verbose_name_plural = "Categories"
-        ordering = ['category_name']
+        ordering = ['-id']
         db_table = 'category'
 
 
@@ -27,6 +27,7 @@ class Measurement(models.Model):
     class Meta:
         verbose_name_plural = "Measurements"
         db_table = 'measurement'
+        ordering = ['-id']
 
 
 class Product(models.Model):
@@ -53,7 +54,7 @@ class Product(models.Model):
 
     class Meta:
         verbose_name_plural = "Products"
-        ordering = ['product_name']
+        ordering = ['-id']
         db_table = 'product'
 
 
