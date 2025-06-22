@@ -67,27 +67,51 @@ class ProductSerializer(ModelSerializer):
     def update(self, instance, validated_data):
         measurement_data = validated_data.pop('measurementproduct_set', [])
         categories_for_recycling = validated_data.pop('categories_for_recycling', [])
+
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
-        instance.save()
-        instance.categories_for_recycling.set(categories_for_recycling)
-        for item in measurement_data:
-            measurement = item['measurement']
-            number = item['number']
-            for_sale = item['for_sale']
 
-            obj = MeasurementProduct.objects.filter(measurement=measurement, product=instance).first()
-            if obj:
-                obj.number = number
-                obj.for_sale = for_sale
-                obj.save()
-            else:
-                MeasurementProduct.objects.create(
-                    measurement=measurement,
-                    product=instance,
-                    number=number,
-                    for_sale=for_sale
-                )
+        if 'category' in validated_data and validated_data['category']:
+            if not instance.history:
+                instance.history = {}
+            instance.history['category'] = validated_data['category'].category_name
+
+        instance.save()
+
+        if categories_for_recycling is not None:
+            instance.categories_for_recycling.set(categories_for_recycling)
+
+        if measurement_data:
+            existing_measurements = {
+                mp.measurement.id: mp
+                for mp in instance.measurementproduct_set.all()
+            }
+
+            updated_measurement_ids = []
+
+            for item in measurement_data:
+                measurement_id = item['measurement'].id if hasattr(item['measurement'], 'id') else item['measurement']
+                number = item.get('number', 0)
+                for_sale = item.get('for_sale', False)
+
+                updated_measurement_ids.append(measurement_id)
+
+                if measurement_id in existing_measurements:
+                    measurement_product = existing_measurements[measurement_id]
+                    measurement_product.number = number
+                    measurement_product.for_sale = for_sale
+                    measurement_product.save()
+                else:
+                    MeasurementProduct.objects.create(
+                        measurement_id=measurement_id,
+                        product=instance,
+                        number=number,
+                        for_sale=for_sale
+                    )
+
+            instance.measurementproduct_set.exclude(
+                measurement_id__in=updated_measurement_ids
+            ).delete()
 
         return instance
 
