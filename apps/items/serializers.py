@@ -116,6 +116,12 @@ class ProductSerializer(ModelSerializer):
         return instance
 
 
+class CurrencySerializer(ModelSerializer):
+    class Meta:
+        model = Currency
+        fields = '__all__'
+
+
 class StockSerializers(ModelSerializer):
     store_write = serializers.PrimaryKeyRelatedField(queryset=Store.objects.filter(is_main=True), source='store',
                                                      write_only=True)
@@ -135,7 +141,10 @@ class StockSerializers(ModelSerializer):
     quantity_for_history = serializers.FloatField(read_only=True)
     purchase_price_in_us = serializers.FloatField(required=False)
     purchase_price_in_uz = serializers.FloatField(required=False)
-    exchange_rate = serializers.FloatField(required=False)
+    exchange_rate_write = serializers.PrimaryKeyRelatedField(queryset=Currency.objects.all(), required=False,
+                                                             write_only=True, source='exchange_rate'
+                                                             )
+    exchange_rate_read = CurrencySerializer(read_only=True, source='exchange_rate')
     selling_price = serializers.FloatField(required=False)
     min_price = serializers.FloatField(required=False)
     date_of_arrived = serializers.DateTimeField()
@@ -144,18 +153,25 @@ class StockSerializers(ModelSerializer):
         model = Stock
         fields = ['id',
                   'product_write', 'store_write', 'store_read', "product_read", 'purchase_price_in_uz',
-                  'purchase_price_in_us',
-                  'selling_price',
-                  'min_price', "exchange_rate", 'quantity', 'quantity_for_history', 'history_of_prices',
-                  'supplier_read', 'supplier_write', 'date_of_arrived', 'total_volume', 'income_weight'
+                  "purchase_price_in_us",
+
+                  'selling_price', 'exchange_rate_read',
+                  'min_price', "exchange_rate_write", 'quantity', 'quantity_for_history',
+                  'history_of_prices', 'selling_price_in_us',
+                  'supplier_read', 'supplier_write', 'date_of_arrived', 'total_volume',
+                  'income_weight'
                   ]
 
     def create(self, validated_data):
         selling_price = float(validated_data.pop('selling_price', 0))
         min_price = float(validated_data.pop('min_price', 0))
-        exchange_rate = float(validated_data.pop('exchange_rate', 0))
+        exchange_rate_write = validated_data.pop('exchange_rate_write', None)
+        if exchange_rate_write is None:
+            exchange_rate_write = Currency.objects.first()
+            if not exchange_rate_write:
+                raise serializers.ValidationError("Нет доступной валюты.")
         product_write = validated_data.pop('product', None)
-        purchase_price_in_us = float(validated_data.pop('purchase_price_in_us', 0))
+        purchase_price_in_us = validated_data.pop('purchase_price_in_us', None)
         purchase_price_in_uz = float(validated_data.pop('purchase_price_in_uz', 0))
         quantity = float(validated_data.pop('quantity', 0))
         date_of_arrived = validated_data.pop('date_of_arrived', None)
@@ -174,7 +190,7 @@ class StockSerializers(ModelSerializer):
             "purchase_price_in_uz": purchase_price_in_uz,
             "selling_price": selling_price,
             "min_price": min_price,
-            "exchange_rate": exchange_rate,
+            "exchange_rate": f'{exchange_rate_write.currency_rate}',
             "quantity": quantity,
             "total_volume": total_volume,
             "date_of_arrived": f'{date_of_arrived}',
@@ -185,13 +201,12 @@ class StockSerializers(ModelSerializer):
         stock = Stock.objects.create(
             **validated_data,
             product=product_write,
-
             history_of_prices=history,
             selling_price=selling_price,
             min_price=min_price,
             purchase_price_in_us=purchase_price_in_us,
             purchase_price_in_uz=purchase_price_in_uz,
-            exchange_rate=exchange_rate,
+            exchange_rate=exchange_rate_write,
             quantity=quantity,
             quantity_for_history=quantity,
             date_of_arrived=date_of_arrived,
@@ -206,8 +221,7 @@ class StockSerializers(ModelSerializer):
     def update(self, instance, validated_data):
         selling_price = float(validated_data.pop('selling_price', instance.selling_price))
         min_price = float(validated_data.pop('min_price', instance.min_price))
-        exchange_rate = float(validated_data.pop('exchange_rate', instance.exchange_rate))
-        purchase_price_in_us = float(validated_data.pop('purchase_price_in_us', instance.purchase_price_in_us))
+
         purchase_price_in_uz = float(validated_data.pop('purchase_price_in_uz', instance.purchase_price_in_uz))
         quantity = float(validated_data.pop('quantity', instance.quantity))
 
@@ -218,8 +232,7 @@ class StockSerializers(ModelSerializer):
 
         instance.selling_price = selling_price
         instance.min_price = min_price
-        instance.exchange_rate = exchange_rate
-        instance.purchase_price_in_us = purchase_price_in_us
+
         instance.purchase_price_in_uz = purchase_price_in_uz
         instance.quantity = quantity
 

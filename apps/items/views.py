@@ -35,6 +35,14 @@ class MeasurementViewSet(viewsets.ModelViewSet):
     filterset_class = MeasurementFilter
 
 
+class CurrencyViewSet(viewsets.ModelViewSet):
+    permission_classes = [IsAuthenticated, ItemPermission]
+    queryset = Currency.objects.all()
+    serializer_class = CurrencySerializer
+    pagination_class = CustomPageNumberPagination
+    http_method_names = ['get', 'post', 'put', 'patch']
+
+
 class StockViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, StockPermission]
     serializer_class = StockSerializers
@@ -46,4 +54,3 @@ class StockViewSet(viewsets.ModelViewSet):
         if self.request.user.is_superuser:
             return Stock.objects.all()
         return Stock.objects.filter(store=self.request.user.store)
-
