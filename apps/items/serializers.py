@@ -123,7 +123,7 @@ class CurrencySerializer(ModelSerializer):
 
 
 class StockSerializers(ModelSerializer):
-    store_write = serializers.PrimaryKeyRelatedField(queryset=Store.objects.filter(is_main=True), source='store',
+    store_write = serializers.PrimaryKeyRelatedField(queryset=Store.objects.all(), source='store',
                                                      write_only=True)
     store_read = StoreSerializer(source='store', read_only=True)
 
