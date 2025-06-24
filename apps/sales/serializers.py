@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
 from apps.debts.serializers import DebtInSaleSerializer, Debt
@@ -43,12 +44,22 @@ class SaleItemSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError('Недостаточно товара на складе')
         
         return attrs
+    
+    def create(self, validated_data):
+        sale_id = self.context.get('sale_pk')
+        sale = get_object_or_404(Sale, id=sale_id)
+        return SaleItem.objects.create(sale=sale, **validated_data)
 
 
 class SalePaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = SalePayment
-        fields = ['amount', 'payment_method']
+        fields = ['id', 'amount', 'payment_method', 'paid_at']
+    
+    def create(self, validated_data):
+        sale_id = self.context.get('sale_pk')
+        sale = get_object_or_404(Sale, id=sale_id)
+        return SalePayment.objects.create(sale=sale, **validated_data)
       
 
 class SaleSerializer(serializers.ModelSerializer):
@@ -65,7 +76,8 @@ class SaleSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'store_read', 'worker_read', 'client', 'store', 'sold_by',
             'on_credit', 'sale_items', 'sale_debt',
-            'total_amount', 'sale_payments', 'is_paid',"sold_date"
+            'total_amount', 'total_pure_revenue', 'sale_payments',
+            'is_paid',"sold_date",
             ]
     
     def validate(self, attrs):
@@ -175,18 +187,16 @@ class SaleSerializer(serializers.ModelSerializer):
         return new_sale
 
     def update(self, instance, validated_data):
-        validated_data.pop('on_credit', None)
-        validated_data.pop('is_paid', None)
-        validated_data.pop('sale_items', None)
-        validated_data.pop('sale_debt', None)
-        validated_data.pop('sale_payments', None)
-
-        for field,value in validated_data.items():
+        forbidden_fields = ['on_credit', 'sale_items', 'sale_payments', 'sale_debt', 'client']
+        for field in forbidden_fields:
+            if field in self.initial_data:
+                raise serializers.ValidationError({field: 'Это поле нельзя обновить.'})
+    
+        for field, value in validated_data.items():
             if value is not None:
                 setattr(instance, field, value)
-
+    
         instance.save()
-
         return instance
 
     def to_representation(self, instance):
