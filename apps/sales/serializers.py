@@ -150,7 +150,6 @@ class SaleSerializer(serializers.ModelSerializer):
             )
 
         if sale_items is not None:
-            item_instances = list()
 
             for item in sale_items:
                 stock = item['stock']
@@ -158,15 +157,13 @@ class SaleSerializer(serializers.ModelSerializer):
                 unit_price = stock.selling_price
                 subtotal = item.get('subtotal', quantity*unit_price)
 
-                item_instances.append(SaleItem(
+                SaleItem.objects.create(
                     sale=new_sale,
                     stock=stock,
                     quantity=quantity,
                     selling_method=item['selling_method'],
                     subtotal=subtotal,
-                ))
-            
-            SaleItem.objects.bulk_create(item_instances)
+                )
         
         new_sale.total_amount = total_amount or new_sale.get_total_amount()
 
