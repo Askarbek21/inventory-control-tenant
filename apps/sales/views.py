@@ -37,8 +37,15 @@ class SaleItemViewset(viewsets.ModelViewSet):
         return context
     
     def destroy(self, request, *args, **kwargs):
-        return Response('Позицию можно только обновить!', status=status.HTTP_400_BAD_REQUEST)
-
+        instance = self.get_object()
+        if instance.sale.sale_items.count() <= 1:
+            return Response(
+                {"detail": "Нельзя удалить последний товар из продажи."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
 
 class SalePaymentViewset(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser]
@@ -53,4 +60,11 @@ class SalePaymentViewset(viewsets.ModelViewSet):
         return context
     
     def destroy(self, request, *args, **kwargs):
-        return Response('Оплату можно только обновить!', status=status.HTTP_400_BAD_REQUEST)
+        instance = self.get_object()
+        if instance.sale.sale_payments.count() <= 1:
+            return Response(
+                {"detail": "Нельзя удалить последнюю оплату из продажи."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)

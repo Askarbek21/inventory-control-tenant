@@ -9,7 +9,7 @@ from .models import Sale, SaleItem
 
 @receiver(pre_save, sender=SaleItem)
 def cache_old_sale_item_state(sender, instance, **kwargs):
-    """Cache the old quantity and selling_method before save"""
+    """Сохраняем старые значения quantity и selling_method"""
     if instance.pk:
         try:
             old_instance = SaleItem.objects.get(pk=instance.pk)
@@ -73,6 +73,12 @@ def deduct_budget(sender, instance, **kwargs):
         store.save(update_fields=['budget'])
         
 
+@receiver(pre_delete, sender=SaleItem)
+def restore_stock_on_saleitem_delete(sender, instance, **kwargs):
+    def rollback_stock():
+        adjust_stock(instance, instance.quantity, instance.selling_method, increase=True)
+
+    transaction.on_commit(rollback_stock)
 
 
 
