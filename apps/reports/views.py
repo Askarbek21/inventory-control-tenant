@@ -325,18 +325,7 @@ class SalesProfitView(APIView):
         
         total_sales = sales.count()
         total_revenue = sales.aggregate(total=Sum('total_amount'))['total'] or 0
-
-        sale_items = SaleItem.objects.filter(
-            sale__in=sales
-        )
-        
-        total_pure_revenue = 0
-        
-        for item in sale_items:
-            per_unit_cost = float(item.stock.purchase_price_in_uz) / float(item.stock.quantity_for_history)
-            purchase_cost = float(item.subtotal) - per_unit_cost
-            item_profit = purchase_cost * float(item.quantity)
-            total_pure_revenue += item_profit
+        total_pure_revenue = sales.aggregate(total=Sum('total_pure_revenue'))['total'] or 0
         
         response_data = {
             'total_sales': total_sales,
