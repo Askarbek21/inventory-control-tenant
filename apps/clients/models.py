@@ -32,9 +32,9 @@ class BalanceHistory(models.Model):
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='balance_history')
     sale = models.ForeignKey('sales.Sale', on_delete=models.SET_NULL, null=True)
     worker = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True)
-    previous_balance = models.DecimalField(max_digits=10, decimal_places=2)
-    new_balance = models.DecimalField(max_digits=10, decimal_places=2)
-    amount_deducted = models.DecimalField(max_digits=10, decimal_places=2, null=True)
+    previous_balance = models.DecimalField(max_digits=20, decimal_places=2)
+    new_balance = models.DecimalField(max_digits=20, decimal_places=2)
+    amount_deducted = models.DecimalField(max_digits=20, decimal_places=2, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
 
     class Meta:

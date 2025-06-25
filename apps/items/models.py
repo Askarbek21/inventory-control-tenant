@@ -54,7 +54,7 @@ class Product(models.Model):
 
     class Meta:
         verbose_name_plural = "Products"
-        ordering = ['-id']
+        ordering = ['-product_name']
         db_table = 'product'
 
 

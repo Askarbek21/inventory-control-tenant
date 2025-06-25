@@ -100,11 +100,6 @@ class SaleSerializer(serializers.ModelSerializer):
                 'client': 'Допускается только юр.лицо'
             })
         
-        if not on_credit and not sale_payments and not client:
-            raise serializers.ValidationError({
-                'sale_payments': 'Поле должно быть заполнено'
-            })
-        
         if sold_by and store and sold_by.store != store:
             raise serializers.ValidationError({
                 'Данный работник не работает в выбранном магазине'
