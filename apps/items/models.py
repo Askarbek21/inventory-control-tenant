@@ -37,6 +37,8 @@ class Product(models.Model):
                                          related_name='measurements')
     has_color = models.BooleanField(default=False)
     has_kub = models.BooleanField(default=False)
+    has_metr = models.BooleanField(default=False)
+    has_shtuk = models.BooleanField(default=False)
     kub = models.FloatField(max_length=199, null=True, blank=True)
 
     color = models.CharField(max_length=199, null=True, blank=True)

@@ -42,7 +42,7 @@ class ProductSerializer(ModelSerializer):
         model = Product
         fields = ['id', 'product_name', 'category_write', 'category_read', 'measurement', 'color', 'has_color',
                   'history', 'has_kub', 'kub', 'has_recycling', "categories_for_recycling",
-                  "is_list",
+                  "is_list","has_shtuk","has_metr",
                   "length",
                   "static_weight",
                   ]
