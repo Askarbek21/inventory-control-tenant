@@ -7,6 +7,7 @@ from rest_framework_simplejwt.views import (
 
 from apps.staff.views import CustomTokenObtainPairView
 from apps.debts.views import DebtsGroupedByClientView
+from apps.tenants.views import debug_tenant_view
 
 urlpatterns = [
     #    path('admin/', admin.site.urls),
@@ -28,5 +29,5 @@ urlpatterns = [
     path('api/v1/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/v1/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/v1/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
-
+    path('api/v1/debug', debug_tenant_view),
 ]
