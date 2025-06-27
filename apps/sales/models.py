@@ -12,6 +12,7 @@ class Sale(models.Model):
     sold_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True)
     client = models.ForeignKey(Client, on_delete=models.SET_NULL, null=True)
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, null=True)
+    total_pure_revenue = models.DecimalField(max_digits=12, decimal_places=2, default=0.0)
     on_credit = models.BooleanField(default=False)
     is_paid = models.BooleanField(default=True)
     sold_date = models.DateTimeField(auto_now_add=True)

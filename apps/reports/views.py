@@ -123,8 +123,8 @@ class ProductIntakeView(APIView):
             stocks = stocks.filter(store=user.store)
         stocks = stocks.annotate(
             total_value=ExpressionWrapper(
-                F('quantity') * F('purchase_price_in_uz'),
-                output_field=DecimalField(max_digits=20, decimal_places=2)
+                F('quantity') * F('selling_price'),
+                output_field=DecimalField(max_digits=50, decimal_places=2)
             )
         )
 
@@ -164,10 +164,10 @@ class ProductProfitabilityView(APIView):
             product_name=F('stock__product__product_name')
         ).annotate(
             revenue=Sum('subtotal'),
-            cost=Sum(ExpressionWrapper(F('stock__purchase_price_in_uz') * F('quantity'), output_field=DecimalField(max_digits=20, decimal_places=2))),
+            cost=Sum(ExpressionWrapper(F('stock__purchase_price_in_uz') * F('quantity'), output_field=DecimalField(max_digits=40, decimal_places=2))),
         ).annotate(
             profit=F('revenue') - F('cost'),
-            margin=ExpressionWrapper(Cast(F('profit'), DecimalField(max_digits=25, decimal_places=2)) *100 / Cast(F('revenue'), DecimalField(max_digits=20, decimal_places=2)), output_field=DecimalField(max_digits=20, decimal_places=2))
+            margin=ExpressionWrapper(Cast(F('profit'), DecimalField(max_digits=50, decimal_places=2)) *100 / Cast(F('revenue'), DecimalField(max_digits=50, decimal_places=2)), output_field=DecimalField(max_digits=50, decimal_places=2))
         )
 
         sort = request.query_params.get('sort', 'profit')
@@ -198,22 +198,22 @@ class ClientDebtView(APIView):
             total_debt=Coalesce(
                 Sum('total_amount'),
                 0,
-                output_field=DecimalField(max_digits=20, decimal_places=2)
+                output_field=DecimalField(max_digits=50, decimal_places=2)
             ),
             total_paid=Coalesce(
                 Sum('payments__amount'),
                 0,
-                output_field=DecimalField(max_digits=20, decimal_places=2)
+                output_field=DecimalField(max_digits=50, decimal_places=2)
             ),
             deposit=Coalesce(
                 Sum('deposit'),
                 0,
-                output_field=DecimalField(max_digits=20, decimal_places=2)
+                output_field=DecimalField(max_digits=50, decimal_places=2)
             ),
         ).annotate(
             remaining_debt=ExpressionWrapper(
                 F('total_debt') - F('total_paid') - F('deposit'),
-                output_field=DecimalField(max_digits=20, decimal_places=2)
+                output_field=DecimalField(max_digits=50, decimal_places=2)
             )
         ).order_by('-remaining_debt')
 
@@ -325,18 +325,7 @@ class SalesProfitView(APIView):
         
         total_sales = sales.count()
         total_revenue = sales.aggregate(total=Sum('total_amount'))['total'] or 0
-
-        sale_items = SaleItem.objects.filter(
-            sale__in=sales
-        )
-        
-        total_pure_revenue = 0
-        
-        for item in sale_items:
-            per_unit_cost = float(item.stock.purchase_price_in_uz) / float(item.stock.quantity_for_history)
-            purchase_cost = float(item.subtotal) - per_unit_cost
-            item_profit = purchase_cost * float(item.quantity)
-            total_pure_revenue += item_profit
+        total_pure_revenue = sales.aggregate(total=Sum('total_pure_revenue'))['total'] or 0
         
         response_data = {
             'total_sales': total_sales,
