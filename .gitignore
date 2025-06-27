@@ -6,5 +6,6 @@ celerybeat*
 .env
 static/
 venv/
+stock_control_backup_copy.sql
 
 .idea

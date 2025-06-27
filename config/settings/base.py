@@ -124,7 +124,7 @@ DATABASE_ROUTERS = (
 
 TENANT_MODEL = "tenants.Customer"
 TENANT_DOMAIN_MODEL = "tenants.Domain" 
-
+PUBLIC_SCHEMA_URLCONF = 'config.public_urls'
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(minutes=999),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=30),
