@@ -71,9 +71,11 @@ class DebtPaymentSerializer(serializers.ModelSerializer):
 
 
 class DebtInSaleSerializer(serializers.ModelSerializer):
+    client_read = ClientSerializer(read_only=True)
+    client = serializers.PrimaryKeyRelatedField(queryset=Client.objects.all(), write_only=True)
     class Meta:
         model = Debt 
-        fields = ['client', 'due_date', 'deposit']
+        fields = ['client', 'client_read', 'due_date', 'deposit']
     
     def validate(self, attrs):
         due_date = attrs.get('due_date')
