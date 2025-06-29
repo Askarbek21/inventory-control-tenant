@@ -6,5 +6,4 @@ celerybeat*
 .env
 static/
 venv/
-
 .idea

@@ -68,6 +68,7 @@ class TransferSerializer(ModelSerializer):
                 history_of_prices=stock.history_of_prices,
                 quantity_for_history = amount,
                 supplier=stock.supplier,
+                selling_price_in_us = stock.selling_price_in_us
             )
             transfer = Transfer.objects.create(**validated_data,
                                                amount=amount,
