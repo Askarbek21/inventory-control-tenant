@@ -6,8 +6,8 @@ from .models import *
 
 
 class LoanSerializer(serializers.ModelSerializer):
-    sponsor_write = serializers.PrimaryKeyRelatedField(queryset=Sponsor.objects.all(), write_only=True)
-    sponsor_read = SponsorSerializer(read_only=True)
+    sponsor_write = serializers.PrimaryKeyRelatedField(queryset=Sponsor.objects.all(), write_only=True,source='sponsor')
+    sponsor_read = SponsorSerializer(read_only=True, source='sponsor')
     remainder = serializers.SerializerMethodField()
 
     class Meta:
@@ -27,7 +27,7 @@ class LoanSerializer(serializers.ModelSerializer):
         return attrs
 
     def get_remainder(self, obj):
-        remainder = obj.total_amount - sum([payment.amount for payment in obj.payments.all()])
+        remainder = obj.total_amount - sum([payment.amount for payment in obj.loan_payments.all()])
         return remainder if remainder > 0 else 0
 
 
