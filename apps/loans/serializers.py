@@ -14,7 +14,8 @@ class LoanSerializer(serializers.ModelSerializer):
         model = Loan 
         fields = [
             'id', 'sponsor_read', 'sponsor_write', 'is_paid',
-            'total_amount', 'currency', 'created_at', 'due_date'
+            'total_amount', 'currency', 'created_at', 'due_date',
+            'remainder',
         ]
     
     def validate(self, attrs):
