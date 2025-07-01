@@ -64,7 +64,7 @@ class SalePaymentSerializer(serializers.ModelSerializer):
 
 class SaleSerializer(serializers.ModelSerializer):
     sale_items = SaleItemSerializer(many=True)
-    sale_debt = DebtInSaleSerializer(required=False, write_only=True)
+    sale_debt = DebtInSaleSerializer(required=False)
     store_read = StoreSerializer(read_only=True, source='store')
     worker_read = UserSerializer(read_only=True, source='sold_by')
     sale_payments = SalePaymentSerializer(many=True, required=False)

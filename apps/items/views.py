@@ -1,3 +1,4 @@
+from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import viewsets
@@ -6,6 +7,9 @@ from apps.items.serializers import *
 from config.pagination import CustomPageNumberPagination
 from config.permissions import ItemPermission, StockPermission
 from .filters import *
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+from django.core.cache import cache
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
@@ -25,6 +29,9 @@ class ProductViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_class = ProductFilter
 
+    
+
+         
 
 class MeasurementViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated, ItemPermission]

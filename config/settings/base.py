@@ -34,6 +34,8 @@ TENANT_APPS = [
     'apps.recycling',
     'apps.expenses',
     'apps.incomes',
+    'apps.loans',
+    'apps.sponsors',
 ]
 
 INSTALLED_APPS = list(SHARED_APPS) + [app for app in TENANT_APPS if app not in SHARED_APPS]
@@ -179,3 +181,5 @@ STATIC_ROOT = BASE_DIR / 'static'
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+

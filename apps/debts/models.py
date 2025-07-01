@@ -12,8 +12,8 @@ class Debt(models.Model):
     store = models.ForeignKey(Store, on_delete=models.CASCADE, related_name='store_debts')
     client = models.ForeignKey(Client, on_delete=models.CASCADE, related_name='client_debts')
     due_date = models.DateField(null=True)
-    total_amount = models.DecimalField(max_digits=12, decimal_places=2)
-    deposit = models.DecimalField(max_digits=12, decimal_places=2, null=True, default=0.0)
+    total_amount = models.DecimalField(max_digits=20, decimal_places=2)
+    deposit = models.DecimalField(max_digits=20, decimal_places=2, null=True, default=0.0)
     is_paid = models.BooleanField(default=False)
     from_client_balance = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -29,7 +29,7 @@ class Debt(models.Model):
 
 class DebtPayment(models.Model):
     debt = models.ForeignKey(Debt, on_delete=models.CASCADE, related_name='payments')
-    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    amount = models.DecimalField(max_digits=20, decimal_places=2)
     payment_method = models.CharField(max_length=12, choices=PAYMENT_METHOD_CHOICES)
     worker = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, related_name='registered_payments')
     paid_at = models.DateTimeField(auto_now_add=True)

@@ -41,7 +41,7 @@ def process_sale(sale: Sale):
         return
 
     # Юр. лицо
-    old_balance = client.balance
+    old_balance = client.balance or 0
     paid_amount = min(max(old_balance, 0), sale.total_amount)
     credit_amount = sale.total_amount - paid_amount
     new_balance = old_balance - sale.total_amount
