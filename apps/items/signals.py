@@ -22,23 +22,7 @@ def update_stock_total_volume(sender, instance, **kwargs):
         if instance.kub is not None and st.quantity is not None:
             st.total_volume = st.quantity * instance.kub
             st.save() 
-    print(cache.keys("*"))
-    print("signal")
-    CACHE_PREFIX = "views.decorators.cache"
-    #cache.delete_pattern(f"{CACHE_PREFIX}.cache_page.product_list*")
-    #cache.delete_pattern(f"{CACHE_PREFIX}.cache_header.product_list*")
-    cache.delete_pattern("product_list_*")
-    print("Good")
-    print(cache.keys("*"))
 
 
-@receiver(post_delete, sender=Product)
-def clear_cache_on_delete(sender, instance, **kwargs):
-    print(cache.keys("*"))
-    print("signal")
-    CACHE_PREFIX = "views.decorators.cache"
-    #cache.delete_pattern(f"{CACHE_PREFIX}.cache_page.product_list*")
-    #cache.delete_pattern(f"{CACHE_PREFIX}.cache_header.product_list*")
-    cache.delete_pattern("product_list_*")
-    print("Good")
-    print(cache.keys("*"))
+
+

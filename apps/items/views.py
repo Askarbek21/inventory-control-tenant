@@ -30,17 +30,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     filterset_class = ProductFilter
 
     
-    def list(self, request, *args, **kwargs):
-        query_params = request.query_params.urlencode()
-        cache_key = f'poduct_list_query_params_{query_params}'
-        cached_products = cache.get(cache_key)
-        if cached_products:
-            return Response(cached_products)
-        
-        
-        response = super().list(request, *args, **kwargs)
-        cache.set(cache_key, response.data, timeout=60*2)
-        return response
+
          
 
 class MeasurementViewSet(viewsets.ModelViewSet):
