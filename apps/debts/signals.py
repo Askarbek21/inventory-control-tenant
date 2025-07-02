@@ -22,6 +22,7 @@ def handle_debt_payment(sender, instance, created, **kwargs):
 
         Income.objects.create(
             store=store,
+            debt_payment=instance,
             source='Погашение долга',
             worker=instance.worker,
             description={

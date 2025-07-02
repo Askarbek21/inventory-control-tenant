@@ -17,6 +17,7 @@ def process_sale(sale: Sale):
                 source='Продажа',
                 store=store,
                 worker=sale.sold_by,
+                sale=sale,
                 description={
                     "Amount": str(sale.total_amount),
                     "Sold Date": str(sale.sold_date),
@@ -54,6 +55,7 @@ def process_sale(sale: Sale):
             source='Продажа',
             store=store,
             worker=sale.sold_by,
+            sale=sale,
             description={
                 "Amount": str(paid_amount),
                 "Sold Date": str(sale.sold_date),
