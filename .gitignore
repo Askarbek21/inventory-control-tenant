@@ -7,3 +7,4 @@ celerybeat*
 static/
 venv/
 .idea
+database.json

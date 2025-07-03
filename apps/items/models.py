@@ -60,6 +60,7 @@ class Product(models.Model):
         db_table = 'product'
 
 
+
 class MeasurementProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     measurement = models.ForeignKey(Measurement, on_delete=models.CASCADE)
@@ -122,6 +123,7 @@ class Stock(models.Model):
         return f'{self.product.product_name} -- {self.store.name}'
 
     def save(self, *args, **kwargs):
+        self.quantity = round(self.quantity, 2)
         if not self.exchange_rate_id:
             self.exchange_rate = Currency.objects.first()
         super().save(*args, **kwargs)

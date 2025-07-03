@@ -31,8 +31,8 @@ class TransferSerializer(ModelSerializer):
         to_stock = attrs['to_stock']
         amount = attrs['amount']
 
-        if amount > from_stock.quantity or amount <= 0:
-            raise ValidationError('Amount must be greater than the quantity in stock.')
+        #if round(amount, 2) > round(from_stock.quantity, 2) or round(amount, 2) <= 0:
+       #     raise ValidationError('Amount must be greater than the quantity in stock.')
         if from_stock.store.id == to_stock.id:
             raise ValidationError('Cannot transfer to the same store.')
         return attrs
@@ -68,7 +68,8 @@ class TransferSerializer(ModelSerializer):
                 history_of_prices=stock.history_of_prices,
                 quantity_for_history = amount,
                 supplier=stock.supplier,
-                selling_price_in_us = stock.selling_price_in_us
+                selling_price_in_us = stock.selling_price_in_us,
+                price_per_ton = stock.price_per_ton
             )
             transfer = Transfer.objects.create(**validated_data,
                                                amount=amount,
