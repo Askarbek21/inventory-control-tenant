@@ -351,3 +351,33 @@ class SalesProfitView(APIView):
         }
         
         return Response(response_data)
+
+
+class NetProfitView(APIView):
+    permission_classes = [IsAuthenticated, IsAdministrator]
+
+    def get(self,request):
+        date_from, date_to = get_date_range_with_period(request)
+        store = request.query_params.get('store')
+        user = request.user
+
+        sales = Sale.objects.filter(sold_date__range=(date_from, date_to), is_paid=True)
+        expenses = Expense.objects.filter(date__range=(date_from, date_to))
+
+        if store and user.is_superuser:
+            sales = sales.filter(store=store)
+            expenses = expenses.filter(store=store)
+        if not user.is_superuser:
+            sales = sales.filter(store=user.store)
+            expenses = expenses.filter(store=user.store)
+        
+        total_revenue = sales.aggregate(total=Sum('total_amount'))['total'] or 0
+        total_expense = expenses.aggregate(total=Sum('amount'))['total'] or 0
+
+        net_profit = total_revenue - total_expense
+
+        return Response({
+            'total_revenue': total_revenue,
+            'total_expense': total_expense,
+            'net_profit': net_profit,
+        })
