@@ -11,11 +11,19 @@ class Loan(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     due_date = models.DateField(null=True)
     is_paid = models.BooleanField(default=False)
+    remaining_balance = models.DecimalField(max_digits=20, decimal_places=2, default=0.0)
+    overpayment_unused = models.DecimalField(max_digits=20, decimal_places=2, default=0.0)
 
     class Meta:
         db_table = 'loans'
         ordering = ['-created_at']
         verbose_name_plural = 'Loans'
+
+    def save(self, *args, **kwargs):
+        is_new = self.pk is None
+        if is_new:
+            self.remaining_balance = self.total_amount
+        super().save(*args, **kwargs)
     
 
 class LoanPayment(models.Model):

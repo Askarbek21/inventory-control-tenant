@@ -20,8 +20,8 @@ def apply_existing_overpayment(loan: Loan):
         LoanPayment.objects.create(
             loan=loan,
             amount=apply_amount,
-            payment_method='credit',
-            notes=f'Auto-applied from Loan #{previous.id}'
+            payment_method='Перечисление',
+            notes=f'Автоматическое перечисление от взаимы #{previous.id}'
         )
         loan.remaining_balance -= apply_amount
         if loan.remaining_balance <= 0:
@@ -30,3 +30,26 @@ def apply_existing_overpayment(loan: Loan):
         loan.save(update_fields=['remaining_balance', 'is_paid'])
         previous.overpayment_unused -= apply_amount
         previous.save(update_fields=['overpayment_unused'])
+
+
+def apply_loan_payment(loan: Loan, amount, payment_method, notes=''):
+
+    with transaction.atomic():
+        to_apply = amount
+
+        new_payment = LoanPayment.objects.create(
+            loan=loan,
+            amount=to_apply,
+            payment_method=payment_method,
+            notes=notes
+        )
+
+        loan.remaining_balance -= to_apply
+        if loan.remaining_balance <= 0:
+            loan.remaining_balance = 0
+            loan.is_paid = True
+            overpaid = amount - to_apply
+            if overpaid > 0:
+                loan.overpayment_unused += overpaid
+        loan.save()
+        return new_payment
