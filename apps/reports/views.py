@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from config.permissions import IsAdministrator
-from apps.sales.models import Sale, SaleItem, Stock
+from apps.sales.models import Sale, SaleItem, Stock, SalePayment
 from apps.debts.models import Debt
 from apps.items.models import Product
 from apps.expenses.models import Expense
@@ -327,10 +327,27 @@ class SalesProfitView(APIView):
         total_revenue = sales.aggregate(total=Sum('total_amount'))['total'] or 0
         total_pure_revenue = sales.aggregate(total=Sum('total_pure_revenue'))['total'] or 0
         
+
+        payments = SalePayment.objects.filter(
+            sale__in=sales
+        ).values('payment_method').annotate(
+            total_amount=Sum('amount'),
+            count=Count('id')
+        )
+
+        payments_by_method = {
+            payment['payment_method']: {
+                'total_amount': payment['total_amount'],
+                'count': payment['count']
+            }
+            for payment in payments
+        }
+
         response_data = {
             'total_sales': total_sales,
             'total_revenue': total_revenue,
             'total_pure_revenue': total_pure_revenue,
+            'payments_by_method': payments_by_method,
         }
         
         return Response(response_data)
