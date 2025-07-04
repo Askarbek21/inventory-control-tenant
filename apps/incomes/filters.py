@@ -17,6 +17,10 @@ class IncomeFilter(filters.FilterSet):
         field_name='worker',
         to_field_name='id'
     )
+    product_name = filters.CharFilter(
+        field_name='sale__sale_items__stock__product__product_name',
+        lookup_expr='icontains'
+    )
     source = filters.ChoiceFilter(choices=SOURCE_TYPE_CHOICES)
     start_date = filters.DateFilter(field_name='timestamp', lookup_expr='gte')
     end_date = filters.DateFilter(field_name='timestamp', lookup_expr='lte')
