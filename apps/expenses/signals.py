@@ -6,7 +6,7 @@ from .models import *
 
 @receiver(pre_delete, sender=Expense)
 def after_delete_change_balance(sender, instance, **kwargs):
-    instance.store.budget -= instance.amount
+    instance.store.budget += instance.amount
     instance.store.save()
 
 
