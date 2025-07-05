@@ -36,7 +36,7 @@ def apply_loan_payment(loan: Loan, amount, payment_method, notes=''):
 
     with transaction.atomic():
         to_apply = amount
-
+        initial_remaining_balance = loan.remaining_balance
         new_payment = LoanPayment.objects.create(
             loan=loan,
             amount=to_apply,
@@ -48,7 +48,7 @@ def apply_loan_payment(loan: Loan, amount, payment_method, notes=''):
         if loan.remaining_balance <= 0:
             loan.remaining_balance = 0
             loan.is_paid = True
-            overpaid = amount - to_apply
+            overpaid = amount - initial_remaining_balance
             if overpaid > 0:
                 loan.overpayment_unused += overpaid
         loan.save()
