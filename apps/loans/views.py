@@ -1,5 +1,7 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAdminUser
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from config.pagination import CustomPageNumberPagination
 from .filters import LoanFilter, LoanPaymentFilter
@@ -11,8 +13,24 @@ class LoanViewset(viewsets.ModelViewSet):
     pagination_class = CustomPageNumberPagination
     serializer_class = LoanSerializer
     filterset_class = LoanFilter
-    queryset = Loan.objects.select_related('sponsor')
+    
+    def get_queryset(self):
+        qs = Loan.objects.filter(sponsor=self.kwargs['sponsor_pk']).select_related('sponsor')
+        return qs
 
+    @action(detail=False, methods=['get'], url_path='grouped-by-currency')
+    def grouped_by_currency(self, request, sponsor_pk=None):
+        queryset = self.get_queryset().select_related('sponsor')
+        grouped = {}
+
+        for loan in queryset:
+            currency = loan.currency
+            if currency not in grouped:
+                grouped[currency] = []
+            grouped[currency].append(LoanSerializer(loan).data)
+
+        return Response(grouped)
+    
 
 class LoanPaymentViewset(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser]
