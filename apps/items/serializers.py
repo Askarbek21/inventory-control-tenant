@@ -153,7 +153,7 @@ class StockSerializers(ModelSerializer):
         model = Stock
         fields = ['id',
                   'product_write', 'store_write', 'store_read', "product_read", 'purchase_price_in_uz',
-                  "purchase_price_in_us",
+                  "purchase_price_in_us","price_per_ton",
 
                   'selling_price', 'exchange_rate_read',
                   'min_price', "exchange_rate_write", 'quantity', 'quantity_for_history',

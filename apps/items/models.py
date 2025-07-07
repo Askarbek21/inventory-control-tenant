@@ -116,7 +116,7 @@ class Stock(models.Model):
     total_volume = models.FloatField(max_length=199, null=True, blank=True)
 
     income_weight = models.FloatField(max_length=199, null=True, blank=True)
-
+    price_per_ton = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
     def __str__(self):
         return f'{self.product.product_name} -- {self.store.name}'
 
