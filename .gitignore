@@ -9,5 +9,5 @@ venv/
 stock_control_backup_copy.sql
 .idea
 frontend/
-database.json
+database*
 
