@@ -25,7 +25,6 @@ urlpatterns = [
     path('api/v1/budget/', include('apps.expenses.urls')),
     path('api/v1/incomes/', include('apps.incomes.urls')),
     path('api/v1/dashboard/', include('apps.dashboard.urls')),
-    path('api/v1/loans/', include('apps.loans.urls')),
     path('api/v1/sponsors/', include('apps.sponsors.urls')),
     path('api/v1/debts-by-clients', DebtsGroupedByClientView.as_view()),
     path('api/v1/token/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),

@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 
 from config.permissions import IsAdministrator
-from apps.sales.models import Sale, SaleItem, Stock
+from apps.sales.models import Sale, SaleItem, Stock, SalePayment
 from apps.debts.models import Debt
 from apps.items.models import Product
 from apps.expenses.models import Expense
@@ -327,10 +327,57 @@ class SalesProfitView(APIView):
         total_revenue = sales.aggregate(total=Sum('total_amount'))['total'] or 0
         total_pure_revenue = sales.aggregate(total=Sum('total_pure_revenue'))['total'] or 0
         
+
+        payments = SalePayment.objects.filter(
+            sale__in=sales
+        ).values('payment_method').annotate(
+            total_amount=Sum('amount'),
+            count=Count('id')
+        )
+
+        payments_by_method = {
+            payment['payment_method']: {
+                'total_amount': payment['total_amount'],
+                'count': payment['count']
+            }
+            for payment in payments
+        }
+
         response_data = {
             'total_sales': total_sales,
             'total_revenue': total_revenue,
             'total_pure_revenue': total_pure_revenue,
+            'payments_by_method': payments_by_method,
         }
         
         return Response(response_data)
+
+
+class NetProfitView(APIView):
+    permission_classes = [IsAuthenticated, IsAdministrator]
+
+    def get(self,request):
+        date_from, date_to = get_date_range_with_period(request)
+        store = request.query_params.get('store')
+        user = request.user
+
+        sales = Sale.objects.filter(sold_date__range=(date_from, date_to), is_paid=True)
+        expenses = Expense.objects.filter(date__range=(date_from, date_to))
+
+        if store and user.is_superuser:
+            sales = sales.filter(store=store)
+            expenses = expenses.filter(store=store)
+        if not user.is_superuser:
+            sales = sales.filter(store=user.store)
+            expenses = expenses.filter(store=user.store)
+        
+        total_revenue = sales.aggregate(total=Sum('total_amount'))['total'] or 0
+        total_expense = expenses.aggregate(total=Sum('amount'))['total'] or 0
+
+        net_profit = total_revenue - total_expense
+
+        return Response({
+            'total_revenue': total_revenue,
+            'total_expense': total_expense,
+            'net_profit': net_profit,
+        })

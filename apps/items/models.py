@@ -60,6 +60,7 @@ class Product(models.Model):
         db_table = 'product'
 
 
+
 class MeasurementProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     measurement = models.ForeignKey(Measurement, on_delete=models.CASCADE)
@@ -117,10 +118,12 @@ class Stock(models.Model):
 
     income_weight = models.FloatField(max_length=199, null=True, blank=True)
     price_per_ton = models.DecimalField(max_digits=20, decimal_places=2, null=True, blank=True)
+
     def __str__(self):
         return f'{self.product.product_name} -- {self.store.name}'
 
     def save(self, *args, **kwargs):
+        self.quantity = round(self.quantity, 2)
         if not self.exchange_rate_id:
             self.exchange_rate = Currency.objects.first()
         super().save(*args, **kwargs)

@@ -1,11 +1,12 @@
 from rest_framework.response import Response
 from rest_framework.generics import ListAPIView
-from django.db.models import Sum
+from django.db.models import Sum, ExpressionWrapper, F, FloatField, OuterRef, Subquery
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import StockDashboardFilter
 from config.pagination import CustomPageNumberPagination
 from .serializers import ItemsDashboardSerializer
-from ..items.models import Product, Stock
+from ..items.models import Product, Stock, MeasurementProduct
+from django.db.models.functions import Cast
 
 
 class ItemsDashboardAPIView(ListAPIView):
@@ -30,27 +31,54 @@ class ItemsDashboardAPIView(ListAPIView):
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        filtered_queryset = self.filter_queryset(queryset)
 
+        filtered_queryset = self.filter_queryset(queryset).exclude(product__category__category_name='Рейка')
         total_product = filtered_queryset.count()
 
-        info_products = filtered_queryset.values(
+        non_reyka_qs = filtered_queryset.values(
             'product__product_name', 'store__name'
+
         ).annotate(total_quantity=Sum('quantity'), total_kub_volume=Sum("total_volume")).order_by(
             'product__product_name')
+
         total_volume = filtered_queryset.filter(quantity__gt=0).aggregate(Sum('total_volume'))
 
-        page = self.paginate_queryset(info_products)
+        metr_subquery = MeasurementProduct.objects.filter(
+            product=OuterRef('product'),
+            measurement__measurement_name='Метр'
+        ).annotate(
+            metr_value=Cast(F('number'), FloatField())
+        ).values('metr_value')[:1]
+
+        reyka_qs = self.filter_queryset(queryset).filter(product__category__category_name='Рейка', ).values(
+            'product__product_name', 'store__name'
+        ).annotate(total_kub=Sum(
+            ExpressionWrapper(
+                ((F('quantity') / Subquery(metr_subquery, output_field=FloatField())) * F('product__kub')),
+                output_field=FloatField()
+            )
+        ), total_quantity=Sum('quantity'))
+
+        combined_data = list(non_reyka_qs) + list(reyka_qs)
+        total_reyka = reyka_qs.count()
+        total_volume_reyka = reyka_qs.filter(quantity__gt=0).aggregate(Sum('total_kub'))
+        total = (total_volume['total_volume__sum'] or 0) + (total_volume_reyka['total_kub__sum'] or 0)
+
+        page = self.paginate_queryset(combined_data)
         if page is not None:
             return self.get_paginated_response({
                 "total_product": total_product,
                 "info_products": list(page),
-                "total_volume": total_volume['total_volume__sum'] or 0
+                "total_volume": total_volume['total_volume__sum'] or 0,
+                'total_volume_reyka': total_volume_reyka,
+                "total": total
 
             })
 
         return Response({
             "total_product": total_product,
-            "info_products": list(info_products),
-            "total_volume": total_volume['total_volume__sum'] or 0
+            "info_products": list(combined_data),
+            "reyks": list(reyka_qs),
+            "total_volume": total_volume['total_volume__sum'] or 0,
+            "total": total
         })
