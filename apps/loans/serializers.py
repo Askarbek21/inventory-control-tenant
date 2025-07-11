@@ -44,14 +44,6 @@ class LoanPaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = LoanPayment
         fields = ['id', 'loan', 'amount', 'notes', 'payment_method', 'paid_at']
-
-    def validate(self, attrs):
-        loan = attrs.get('loan')
-
-        if loan.is_paid:
-            raise serializers.ValidationError("Этот долг уже полностью погашен!")
-
-        return attrs
     
     def create(self, validated_data):
         return apply_loan_payment(**validated_data)
