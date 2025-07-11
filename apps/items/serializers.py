@@ -138,7 +138,7 @@ class StockSerializers(ModelSerializer):
     history_of_prices = serializers.JSONField(read_only=True)
 
     quantity = serializers.FloatField(required=False)
-    quantity_for_history = serializers.FloatField(read_only=True)
+    quantity_for_history = serializers.FloatField()
     purchase_price_in_us = serializers.FloatField(required=False)
     purchase_price_in_uz = serializers.FloatField(required=False)
     exchange_rate_write = serializers.PrimaryKeyRelatedField(queryset=Currency.objects.all(), required=False,
@@ -208,7 +208,7 @@ class StockSerializers(ModelSerializer):
             purchase_price_in_uz=purchase_price_in_uz,
             exchange_rate=exchange_rate_write,
             quantity=quantity,
-            quantity_for_history=quantity,
+            
             date_of_arrived=date_of_arrived,
             store=store,
             supplier=supplier,

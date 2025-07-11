@@ -39,6 +39,7 @@ class Expense(models.Model):
 
     class Meta:
         db_table = 'expenses'
+        ordering = ['-date']
 
 
 class CashInFlow(models.Model):

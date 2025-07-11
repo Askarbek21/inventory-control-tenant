@@ -8,4 +8,5 @@ from .views import *
 
 urlpatterns = [
     path('item_dashboard/', ItemsDashboardAPIView.as_view(), ),
+    path('excel_export/', ExportExcelAPIView.as_view(), ),
 ]
