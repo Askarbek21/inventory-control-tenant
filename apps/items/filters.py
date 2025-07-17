@@ -51,5 +51,5 @@ class StockFilter(filters.FilterSet):
 
     class Meta:
         model = Stock
-        fields = ['product_name', "product", "store", "supplier", "date_of_arrived_gte", "date_of_arrived_lte",
+        fields = ['id','product_name', "product", "store", "supplier", "date_of_arrived_gte", "date_of_arrived_lte",
                   'product_zero']

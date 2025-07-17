@@ -33,7 +33,7 @@ class ClientSerializer(serializers.ModelSerializer):
         phone = validated_data.get('phone_number')
         store = self.context['request'].user.store
 
-        client = Client.objects.filter(Q(name=name) | Q(phone_number=phone)).first()
+        client = Client.objects.filter(name=name, phone_number=phone).first()
         if client:
             client.stores.add(store)
             return client

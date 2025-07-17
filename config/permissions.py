@@ -165,7 +165,10 @@ class RecyclingPermission(permissions.BasePermission):
         if request.user.is_superuser:
             return True 
         if request.user.role == 'Администратор' and view.action in ['list', 'retrieve', 'create', 'update', 'partial_update']:
-            return True 
+            return True
+        if request.user.role == 'Продавец' and view.action in ['list', 'retrieve']:
+            return True
+
         return False 
     
     def has_object_permission(self, request, view, obj):

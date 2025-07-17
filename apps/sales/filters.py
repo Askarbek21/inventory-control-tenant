@@ -6,6 +6,7 @@ from .models import Sale
 from django.db.models import Q
 
 class SaleFilter(filters.FilterSet):
+    stock_id = filters.NumberFilter(method='filter_by_id')
     store = filters.ModelChoiceFilter(
         queryset=Store.objects.all(),
         field_name='store',
@@ -28,3 +29,5 @@ class SaleFilter(filters.FilterSet):
 
     def filter_end_date(self, queryset, name, value):
         return queryset.filter(sold_date__lte=datetime.combine(value, datetime.max.time()))
+    def filter_by_id(self, queryset, name, value):
+        return queryset.filter(sale_items__stock=value)
