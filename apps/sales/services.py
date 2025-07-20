@@ -1,3 +1,8 @@
+from django.utils import timezone
+from io import BytesIO
+from reportlab.lib.pagesizes import A4
+from reportlab.pdfgen import canvas
+
 from apps.incomes.models import Income
 from apps.clients.models import BalanceHistory
 from apps.debts.models import Debt
@@ -101,3 +106,45 @@ def process_sale(sale: Sale):
         sale.on_credit = True
         sale.is_paid = False
         sale.save(update_fields=['on_credit', 'is_paid'])
+
+
+def generate_sale_pdf(sale_data: dict) -> BytesIO:
+    buffer = BytesIO()
+    p = canvas.Canvas(buffer, pagesize=A4)
+
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(100, 800, "Чек")
+
+    p.setFont("Helvetica", 12)
+    p.drawString(100, 780, f"Дата: {sale_data.get('created_at').strftime('%d-%m-%Y %H:%M:%S')}")
+    p.drawString(100, 760, f"Кассир: {sale_data.get('worker_read', {}).get('name', 'N/A')}")
+
+    # Items
+    p.drawString(100, 740, "Товары:")
+    y = 720
+    for item in sale_data.get("sale_items", []):
+        stock_read = item.get("stock_read", {})
+        product_read = stock_read.get("product_read", {})
+        product_name = product_read.get("product_name", "N/A")
+        quantity = item.get("quantity", 0)
+        subtotal = item.get("subtotal", 0.0)
+        p.drawString(100, y, f"{product_name} x {quantity} — {subtotal:.2f} сум")
+        y -= 20
+
+    # Payment
+    for payment in sale_data.get("sale_payment", []):
+        amount = payment.get("amount", 0.0)
+        method = payment.get("payment_method", "N/A")
+
+    y -= 10
+    p.drawString(100, y, f"Оплата: {amount:.2f} сум - {method}")
+
+    total = sale_data.get('total_amount', 0.0)
+    y -= 20
+    p.setFont("Helvetica-Bold", 12)
+    p.drawString(100, y, f"Общая сумма: {total:.2f} сум")
+
+    p.showPage()
+    p.save()
+    buffer.seek(0)
+    return buffer

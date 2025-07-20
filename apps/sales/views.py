@@ -1,11 +1,15 @@
+import uuid 
+from django.http import FileResponse
 from rest_framework import viewsets, status
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
+from rest_framework.decorators import action
 
 from config.permissions import SalePermission
 from .serializers import *
 from .filters import SaleFilter
 from config.pagination import CustomPageNumberPagination
+from .services import generate_sale_pdf
 
 
 class SaleViewset(viewsets.ModelViewSet):
@@ -22,6 +26,14 @@ class SaleViewset(viewsets.ModelViewSet):
         if self.request.user.is_superuser:
             return Sale.objects.prefetch_related('sale_items', 'sale_payments').select_related('store', 'sold_by')
         return Sale.objects.filter(store=self.request.user.store).prefetch_related('sale_items', 'sale_payments').select_related('store', 'sold_by')
+
+    @action(methods=['GET'], detail=True, url_path='print-check')
+    def get_sale_check(self):
+        sale = self.get_object()
+        serializer = self.get_serializer(sale)
+        sale_data = serializer.data
+        file = generate_sale_pdf(sale_data=sale_data)
+        return FileResponse(file, as_attachment=True, filename=f'check-{uuid.uuid4()}.pdf')
 
 
 class SaleItemViewset(viewsets.ModelViewSet):

@@ -17,7 +17,7 @@ class SalePermission(permissions.BasePermission):
         if request.user.is_superuser:
             return True
         
-        if view.action in ['list', 'create', 'retrieve']:
+        if view.action in ['list', 'create', 'retrieve', 'get_sale_check']:
                 return True
         
         return False 
