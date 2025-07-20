@@ -28,7 +28,7 @@ class SaleViewset(viewsets.ModelViewSet):
         return Sale.objects.filter(store=self.request.user.store).prefetch_related('sale_items', 'sale_payments').select_related('store', 'sold_by')
 
     @action(methods=['GET'], detail=True, url_path='print-check')
-    def get_sale_check(self):
+    def get_sale_check(self, request, pk=None):
         sale = self.get_object()
         serializer = self.get_serializer(sale)
         sale_data = serializer.data
