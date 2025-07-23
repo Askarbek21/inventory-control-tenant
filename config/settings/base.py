@@ -28,7 +28,6 @@ TENANT_APPS = [
     'apps.debts',
     'apps.reports',
     'apps.clients',
-    'apps.admin',
     'apps.transfer',
     'apps.suppliers',
     'apps.recycling',
