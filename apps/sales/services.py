@@ -1,8 +1,11 @@
 from django.utils import timezone
 from io import BytesIO
+from decouple import config
 from reportlab.lib.pagesizes import A4, portrait
 from reportlab.pdfgen import canvas
-from reportlab.lib.units import mm 
+from reportlab.lib.units import mm
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
 from apps.incomes.models import Income
 from apps.clients.models import BalanceHistory
@@ -110,6 +113,10 @@ def process_sale(sale: Sale):
 
 
 def generate_sale_pdf(sale_data: dict) -> BytesIO:
+    # Register DejaVu Sans
+    font_path = config("FONT_PATH")
+    pdfmetrics.registerFont(TTFont('DejaVu', font_path))
+    pdfmetrics.registerFont(TTFont('DejaVu-Bold', font_path))
     # Create a narrow page (like supermarket receipts)
     width = 80 * mm  # Typical receipt width
     height = 297 * mm  # A4 height
@@ -123,11 +130,11 @@ def generate_sale_pdf(sale_data: dict) -> BytesIO:
     y = height - 10 * mm  # Start 10mm from top
     
     # Header
-    p.setFont("Helvetica-Bold", 12)
+    p.setFont("DejaVu-Bold", 12)
     p.drawCentredString(width/2, y, "ЧЕК")
     y -= 8 * mm
     
-    p.setFont("Helvetica", 9)
+    p.setFont("DejaVu", 9)
     p.drawCentredString(width/2, y, f"Дата: {sale_data.get('sold_date', 'N/A')}")
     y -= 5 * mm
     p.drawCentredString(width/2, y, f"Кассир: {sale_data.get('worker_read', {}).get('name', 'N/A')}")
@@ -136,7 +143,7 @@ def generate_sale_pdf(sale_data: dict) -> BytesIO:
     # Items header
     p.line(x, y, width - x, y)
     y -= 5 * mm
-    p.setFont("Helvetica-Bold", 9)
+    p.setFont("DejaVu-Bold", 9)
     p.drawString(x, y, "Товар")
     p.drawString(width - 25 * mm, y, "Кол-во")
     p.drawString(width - 15 * mm, y, "Сумма")
@@ -145,7 +152,7 @@ def generate_sale_pdf(sale_data: dict) -> BytesIO:
     y -= 3 * mm
     
     # Items list
-    p.setFont("Helvetica", 9)
+    p.setFont("DejaVu", 9)
     for item in sale_data.get("sale_items", []):
         stock_read = item.get("stock_read", {})
         product_read = stock_read.get("product_read", {})
@@ -171,13 +178,13 @@ def generate_sale_pdf(sale_data: dict) -> BytesIO:
     p.line(x, y, width - x, y)
     y -= 5 * mm
     total = float(sale_data.get('total_amount', 0.0))
-    p.setFont("Helvetica-Bold", 10)
+    p.setFont("DejaVu-Bold", 10)
     p.drawString(x, y, "ИТОГО:")
     p.drawString(width - 15 * mm, y, f"{total:.2f}")
     y -= 8 * mm
     
     # Payment methods
-    p.setFont("Helvetica", 9)
+    p.setFont("DejaVu", 9)
     for payment in sale_data.get("sale_payment", []):
         amount = float(payment.get("amount", 0.0))
         method = payment.get("payment_method", "N/A")
@@ -186,7 +193,7 @@ def generate_sale_pdf(sale_data: dict) -> BytesIO:
     
     # Footer
     y -= 10 * mm
-    p.setFont("Helvetica", 8)
+    p.setFont("DejaVu-Bold", 8)
     p.drawCentredString(width/2, y, "Спасибо за покупку!")
     y -= 4 * mm
     
