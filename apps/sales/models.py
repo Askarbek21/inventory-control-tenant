@@ -32,7 +32,7 @@ class Sale(models.Model):
 class SaleItem(models.Model):
     sale = models.ForeignKey(Sale, on_delete=models.CASCADE, related_name='sale_items')
     stock = models.ForeignKey(Stock, on_delete=models.CASCADE)
-    quantity = models.DecimalField(max_digits=10, decimal_places=2, default=1)
+    quantity = models.DecimalField(max_digits=12, decimal_places=3, default=1)
     selling_method = models.CharField(max_length=12, choices=SELLING_METHOD_CHOICES)
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, null=True)
 

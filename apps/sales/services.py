@@ -1,7 +1,8 @@
 from django.utils import timezone
 from io import BytesIO
-from reportlab.lib.pagesizes import A4
+from reportlab.lib.pagesizes import A4, portrait
 from reportlab.pdfgen import canvas
+from reportlab.lib.units import mm 
 
 from apps.incomes.models import Income
 from apps.clients.models import BalanceHistory
@@ -109,40 +110,86 @@ def process_sale(sale: Sale):
 
 
 def generate_sale_pdf(sale_data: dict) -> BytesIO:
+    # Create a narrow page (like supermarket receipts)
+    width = 80 * mm  # Typical receipt width
+    height = 297 * mm  # A4 height
+    pagesize = portrait((width, height))
+    
     buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=A4)
-
-    p.setFont("Helvetica-Bold", 16)
-    p.drawString(100, 800, "Чек")
-
-    p.setFont("Helvetica", 12)
-    p.drawString(100, 780, f"Дата: {sale_data.get('sold_date')}")
-    p.drawString(100, 760, f"Кассир: {sale_data.get('worker_read', {}).get('name', 'N/A')}")
-
-    # Items
-    p.drawString(100, 740, "Товары:")
-    y = 720
+    p = canvas.Canvas(buffer, pagesize=pagesize)
+    
+    # Set initial position (starting from top)
+    x = 5 * mm
+    y = height - 10 * mm  # Start 10mm from top
+    
+    # Header
+    p.setFont("Helvetica-Bold", 12)
+    p.drawCentredString(width/2, y, "ЧЕК")
+    y -= 8 * mm
+    
+    p.setFont("Helvetica", 9)
+    p.drawCentredString(width/2, y, f"Дата: {sale_data.get('sold_date', 'N/A')}")
+    y -= 5 * mm
+    p.drawCentredString(width/2, y, f"Кассир: {sale_data.get('worker_read', {}).get('name', 'N/A')}")
+    y -= 8 * mm
+    
+    # Items header
+    p.line(x, y, width - x, y)
+    y -= 5 * mm
+    p.setFont("Helvetica-Bold", 9)
+    p.drawString(x, y, "Товар")
+    p.drawString(width - 25 * mm, y, "Кол-во")
+    p.drawString(width - 15 * mm, y, "Сумма")
+    y -= 5 * mm
+    p.line(x, y, width - x, y)
+    y -= 3 * mm
+    
+    # Items list
+    p.setFont("Helvetica", 9)
     for item in sale_data.get("sale_items", []):
         stock_read = item.get("stock_read", {})
         product_read = stock_read.get("product_read", {})
         product_name = product_read.get("product_name", "N/A")
         quantity = float(item.get("quantity", 0))
         subtotal = float(item.get("subtotal", 0.0))
-        p.drawString(100, y, f"{product_name} x {quantity} — {subtotal:.2f} сум")
-        y -= 20
-
-    # Payment
+        
+        # Split long product names into multiple lines
+        max_chars = 25
+        if len(product_name) > max_chars:
+            parts = [product_name[i:i+max_chars] for i in range(0, len(product_name), max_chars)]
+            for part in parts:
+                p.drawString(x, y, part)
+                y -= 4 * mm
+        else:
+            p.drawString(x, y, product_name)
+        
+        p.drawString(width - 25 * mm, y, f"{quantity:.2f}")
+        p.drawString(width - 15 * mm, y, f"{subtotal:.2f}")
+        y -= 6 * mm
+    
+    # Total line
+    p.line(x, y, width - x, y)
+    y -= 5 * mm
+    total = float(sale_data.get('total_amount', 0.0))
+    p.setFont("Helvetica-Bold", 10)
+    p.drawString(x, y, "ИТОГО:")
+    p.drawString(width - 15 * mm, y, f"{total:.2f}")
+    y -= 8 * mm
+    
+    # Payment methods
+    p.setFont("Helvetica", 9)
     for payment in sale_data.get("sale_payment", []):
         amount = float(payment.get("amount", 0.0))
         method = payment.get("payment_method", "N/A")
-        p.drawString(100, y, f"Оплата: {amount:.2f} сум - {method}")
-        y -= 10
-
-    total = float(sale_data.get('total_amount', 0.0))
-    y -= 20
-    p.setFont("Helvetica-Bold", 12)
-    p.drawString(100, y, f"Общая сумма: {total:.2f} сум")
-
+        p.drawString(x, y, f"Оплата ({method}): {amount:.2f}")
+        y -= 5 * mm
+    
+    # Footer
+    y -= 10 * mm
+    p.setFont("Helvetica", 8)
+    p.drawCentredString(width/2, y, "Спасибо за покупку!")
+    y -= 4 * mm
+    
     p.showPage()
     p.save()
     buffer.seek(0)
