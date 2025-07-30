@@ -17,6 +17,7 @@ class RecyclingSerializer(ModelSerializer):
     purchase_price_in_uz = serializers.DecimalField(required=False, max_digits=10, decimal_places=2)
     
     selling_price = serializers.DecimalField(required=False, max_digits=10, decimal_places=2)
+    selling_price_in_us = serializers.DecimalField(required=False, max_digits=10, decimal_places=2)
     min_price = serializers.DecimalField(required=False, max_digits=10, decimal_places=2)
 
     store = serializers.PrimaryKeyRelatedField(queryset=Store.objects.all(), write_only=True)
@@ -50,6 +51,7 @@ class RecyclingSerializer(ModelSerializer):
         purchase_price_in_uz = float(validated_data.pop('purchase_price_in_uz', 0))
         
         selling_price = float(validated_data.pop('selling_price', 0))
+        selling_price_in_us = float(validated_data.pop('selling_price_in_us', 0))
         min_price = float(validated_data.pop('min_price', 0))
 
         store = validated_data.pop('store')
@@ -77,7 +79,7 @@ class RecyclingSerializer(ModelSerializer):
             exchange_rate=stock.exchange_rate,
             selling_price=selling_price,
             min_price=min_price,
-
+            selling_price_in_us = selling_price_in_us,
             history_of_prices=history,
             quantity=get_amount,
             quantity_for_history=get_amount,

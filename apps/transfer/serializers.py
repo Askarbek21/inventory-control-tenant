@@ -55,36 +55,28 @@ class TransferSerializer(ModelSerializer):
         receiving_stock = Stock.objects.filter(Q(store=to_stock.id) & Q(product=from_stock.product.id)).order_by(
             '-id').first()
 
-        if receiving_stock is None or receiving_stock.quantity == 0:
-            received_stock = Stock.objects.create(
-                store=to_stock,
-                quantity=amount,
-                product=stock.product,
-                purchase_price_in_us=stock.purchase_price_in_us,
-                purchase_price_in_uz=stock.purchase_price_in_uz,
-                selling_price=stock.selling_price,
-                min_price=stock.min_price,
-                exchange_rate=stock.exchange_rate,
-                history_of_prices=stock.history_of_prices,
-                quantity_for_history = amount,
-                supplier=stock.supplier,
-                selling_price_in_us = stock.selling_price_in_us,
-                price_per_ton = stock.price_per_ton,
-                income_weight = stock.income_weight
-            )
-            transfer = Transfer.objects.create(**validated_data,
-                                               amount=amount,
-                                               from_stock=from_stock,
-                                               to_stock=to_stock,
-                                               stock=received_stock)
-        else:
-            receiving_stock.quantity += float(amount)
-            receiving_stock.save()
-            transfer = Transfer.objects.create(**validated_data,
-                                               amount=amount,
-                                               from_stock=from_stock,
-                                               to_stock=to_stock,
-                                               stock=receiving_stock)
+        
+        received_stock = Stock.objects.create(
+            store=to_stock,
+            quantity=amount,
+            product=stock.product,
+            purchase_price_in_us=stock.purchase_price_in_us,
+            purchase_price_in_uz=stock.purchase_price_in_uz,
+            selling_price=stock.selling_price,
+            min_price=stock.min_price,
+            exchange_rate=stock.exchange_rate,
+            history_of_prices=stock.history_of_prices,
+            quantity_for_history = amount,
+            supplier=stock.supplier,
+            selling_price_in_us = stock.selling_price_in_us,
+            price_per_ton = stock.price_per_ton,
+            income_weight = stock.income_weight
+        )
+        transfer = Transfer.objects.create(**validated_data,
+                                           amount=amount,
+                                           from_stock=from_stock,
+                                           to_stock=to_stock,
+                                           stock=received_stock)
 
         return transfer
 
