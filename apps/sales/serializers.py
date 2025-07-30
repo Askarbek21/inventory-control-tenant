@@ -40,7 +40,7 @@ class SaleItemSerializer(serializers.ModelSerializer):
             if quantity > available_meters:
                 raise serializers.ValidationError('Недостаточно измеренного товара')
         else:
-            if quantity > stock.quantity:
+            if float(quantity) > stock.quantity:
                 raise serializers.ValidationError('Недостаточно товара на складе')
         
         return attrs
