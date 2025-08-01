@@ -91,7 +91,8 @@ class RecyclingSerializer(ModelSerializer):
             to_product=to_product,
             spent_amount=spent_amount,
             get_amount=get_amount,
-            to_stock=recycled_product_in_stock
+            to_stock=recycled_product_in_stock,
+            **validated_data
         )
 
         return recycled_product

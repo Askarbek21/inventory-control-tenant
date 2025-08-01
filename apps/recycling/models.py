@@ -10,6 +10,7 @@ class Recycling(models.Model):
     to_product = models.ForeignKey(Product, on_delete=models.CASCADE)
     date_of_recycle = models.DateField(auto_now=True)
     spent_amount = models.FloatField(default=0)
+    quantity_of_parts = models.CharField(max_length=50,null=True, blank=True,)
 
     get_amount = models.FloatField(default=0, null=True, blank=True)
 
