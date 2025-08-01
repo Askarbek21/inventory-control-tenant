@@ -2,7 +2,7 @@ from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers
 
-from apps.debts.serializers import DebtInSaleSerializer, Debt, DebtSerializer
+from apps.debts.serializers import DebtInSaleSerializer, Debt
 from apps.stores.serializers import StoreSerializer
 from apps.items.serializers import StockSerializers, MeasurementProduct
 from apps.staff.serializers import UserSerializer
@@ -65,7 +65,6 @@ class SalePaymentSerializer(serializers.ModelSerializer):
 class SaleSerializer(serializers.ModelSerializer):
     sale_items = SaleItemSerializer(many=True)
     sale_debt = DebtInSaleSerializer(required=False)
-    sale_debt_read = DebtSerializer(read_only=True, source='sale_debt')
     store_read = StoreSerializer(read_only=True, source='store')
     worker_read = UserSerializer(read_only=True, source='sold_by')
     sale_payments = SalePaymentSerializer(many=True, required=False)
@@ -76,7 +75,7 @@ class SaleSerializer(serializers.ModelSerializer):
         model = Sale 
         fields = [
             'id', 'store_read', 'worker_read', 'client', 'store', 'sold_by',
-            'on_credit', 'sale_items', 'sale_debt', 'sale_debt_read',
+            'on_credit', 'sale_items', 'sale_debt',
             'total_amount', 'total_pure_revenue', 'sale_payments',
             'is_paid',"sold_date",
             ]
@@ -197,7 +196,6 @@ class SaleSerializer(serializers.ModelSerializer):
         if not repr['on_credit']:
             repr.pop('is_paid')
         return repr
-        
 
 
 
