@@ -1,3 +1,4 @@
+from django.db.models import Sum 
 from rest_framework import viewsets
 from rest_framework.permissions import IsAdminUser
 from rest_framework.decorators import action
@@ -30,6 +31,17 @@ class LoanViewset(viewsets.ModelViewSet):
             grouped[currency].append(LoanSerializer(loan).data)
 
         return Response(grouped)
+
+    @action(detail=False, methods=['get'], url_path='totals-by-currency')
+    def totals_by_currency(self, request, sponsor_pk=None):
+        queryset = self.get_queryset()
+        totals = (
+            queryset
+            .values('currency')
+            .annotate(total_amount=Sum('total_amount'))
+        )
+
+        return Response(totals)
     
 
 class LoanPaymentViewset(viewsets.ModelViewSet):
