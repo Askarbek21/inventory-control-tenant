@@ -35,11 +35,20 @@ class LoanViewset(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='totals-by-currency')
     def totals_by_currency(self, request, sponsor_pk=None):
         queryset = self.get_queryset()
+
         totals = (
             queryset
             .values('currency')
-            .annotate(total_amount=Sum('total_amount'))
+            .annotate(
+                total_loan=Sum('total_amount'),
+                total_paid=Sum('loan_payments__amount'),
+                total_unpaid=Sum('remaining_balance')
+            )
         )
+
+        for t in totals:
+            t['total_paid'] = t['total_paid'] or 0
+            t['total_unpaid'] = t['total_unpaid'] or 0
 
         return Response(totals)
     
