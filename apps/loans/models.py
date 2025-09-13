@@ -31,6 +31,7 @@ class LoanPayment(models.Model):
     amount = models.DecimalField(max_digits=20, decimal_places=2)
     payment_method = models.CharField(max_length=12, choices=PAYMENT_METHOD_CHOICES)
     notes = models.TextField(null=True, blank=True)
+    is_overflowed = models.BooleanField(default=False)
     paid_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

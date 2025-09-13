@@ -1,4 +1,4 @@
-from django.db.models import Sum 
+from django.db.models import Sum, Q
 from rest_framework import viewsets
 from rest_framework.permissions import IsAdminUser
 from rest_framework.decorators import action
@@ -41,7 +41,7 @@ class LoanViewset(viewsets.ModelViewSet):
             .values('currency')
             .annotate(
                 total_loan=Sum('total_amount'),
-                total_paid=Sum('loan_payments__amount'),
+                total_paid=Sum('loan_payments__amount', filter=Q(loan_payments__is_overflowed=False)),
                 total_unpaid=Sum('remaining_balance')
             )
         )

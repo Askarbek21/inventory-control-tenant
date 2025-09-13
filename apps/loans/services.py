@@ -36,6 +36,7 @@ def apply_existing_overpayment(loan: Loan):
                     loan=unpaid_loan,
                     amount=apply_amount,
                     payment_method='Перечисление',
+                    is_overflowed=True,
                     notes=f'Автоматическое перечисление от займа #{overpaying_loan.id}'
                 )
 
