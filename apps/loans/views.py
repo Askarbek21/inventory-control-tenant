@@ -1,4 +1,4 @@
-from django.db.models import Sum, OuterRef, Subquery, F
+from django.db.models import Sum 
 from rest_framework import viewsets
 from rest_framework.permissions import IsAdminUser
 from rest_framework.decorators import action
@@ -16,7 +16,7 @@ class LoanViewset(viewsets.ModelViewSet):
     filterset_class = LoanFilter
     
     def get_queryset(self):
-        qs = Loan.objects.filter(sponsor=self.kwargs['sponsor_pk']).select_related('sponsor').prefetch_related('loan_payments')
+        qs = Loan.objects.filter(sponsor=self.kwargs['sponsor_pk']).select_related('sponsor')
         return qs
 
     @action(detail=False, methods=['get'], url_path='grouped-by-currency')
@@ -32,36 +32,25 @@ class LoanViewset(viewsets.ModelViewSet):
 
         return Response(grouped)
 
-@action(detail=False, methods=['get'], url_path='totals-by-currency')
-def totals_by_currency(self, request, sponsor_pk=None):
-    loan_payments_sum_subquery = Subquery(
-        LoanPayment.objects.filter(loan=OuterRef('pk'))
-        .values('loan')
-        .annotate(total_paid_per_loan=Sum('amount'))
-        .values('total_paid_per_loan')
-    )
-    
-    queryset = self.get_queryset().annotate(
-        total_paid_for_loan=loan_payments_sum_subquery
-    ).annotate(
-        calculated_remaining_balance=F('total_amount') - F('total_paid_for_loan')
-    )
+    @action(detail=False, methods=['get'], url_path='totals-by-currency')
+    def totals_by_currency(self, request, sponsor_pk=None):
+        queryset = self.get_queryset()
 
-    totals = (
-        queryset
-        .values('currency')
-        .annotate(
-            total_loan=Sum('total_amount'),
-            total_paid=Sum('total_paid_for_loan'),
-            total_unpaid=Sum('calculated_remaining_balance')
+        totals = (
+            queryset
+            .values('currency')
+            .annotate(
+                total_loan=Sum('total_amount'),
+                total_paid=Sum('loan_payments__amount'),
+                total_unpaid=Sum('remaining_balance')
+            )
         )
-    )
 
-    for t in totals:
-        t['total_paid'] = t['total_paid'] or 0
-        t['total_unpaid'] = t['total_unpaid'] or 0
+        for t in totals:
+            t['total_paid'] = t['total_paid'] or 0
+            t['total_unpaid'] = t['total_unpaid'] or 0
 
-    return Response(totals)
+        return Response(totals)
     
 
 class LoanPaymentViewset(viewsets.ModelViewSet):
