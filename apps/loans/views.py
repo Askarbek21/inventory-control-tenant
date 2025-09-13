@@ -1,4 +1,4 @@
-from django.db.models import Sum, Q
+from collections import defaultdict
 from rest_framework import viewsets
 from rest_framework.permissions import IsAdminUser
 from rest_framework.decorators import action
@@ -34,24 +34,28 @@ class LoanViewset(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path='totals-by-currency')
     def totals_by_currency(self, request, sponsor_pk=None):
-        queryset = self.get_queryset()
+        queryset = self.get_queryset().prefetch_related('loan_payments')
 
-        totals = (
-            queryset
-            .values('currency')
-            .annotate(
-                total_loan=Sum('total_amount'),
-                total_paid=Sum('loan_payments__amount', filter=Q(loan_payments__is_overflowed=False)),
-                total_unpaid=Sum('remaining_balance')
-            )
-        )
+        results = defaultdict(lambda: {
+            "total_loan": 0,
+            "total_paid": 0,
+            "total_unpaid": 0,
+        })
 
-        for t in totals:
-            t['total_paid'] = t['total_paid'] or 0
-            t['total_unpaid'] = t['total_unpaid'] or 0
+        for loan in queryset:
+            currency = loan.currency
+            total_paid = sum(p.amount for p in loan.loan_payments.filter(is_overflowed=False))
 
-        return Response(totals)
-    
+            results[currency]["total_loan"] += float(loan.total_amount)
+            results[currency]["total_paid"] += float(total_paid)
+            results[currency]["total_unpaid"] += float(loan.remaining_balance)
+
+        response = [
+            {"currency": currency, **totals}
+            for currency, totals in results.items()
+        ]
+        return Response(response)
+
 
 class LoanPaymentViewset(viewsets.ModelViewSet):
     permission_classes = [IsAdminUser]
