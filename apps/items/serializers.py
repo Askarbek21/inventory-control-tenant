@@ -42,7 +42,7 @@ class ProductSerializer(ModelSerializer):
         model = Product
         fields = ['id', 'product_name', 'category_write', 'category_read', 'measurement', 'color', 'has_color',
                   'history', 'has_kub', 'kub', 'has_recycling', "categories_for_recycling",
-                  "is_list","has_shtuk","has_metr",
+                  "is_list", "has_shtuk", "has_metr",
                   "length",
                   "static_weight",
                   ]
@@ -149,17 +149,38 @@ class StockSerializers(ModelSerializer):
     min_price = serializers.FloatField(required=False)
     date_of_arrived = serializers.DateTimeField()
 
+    total_pure_revenue = serializers.SerializerMethodField()
+    total_amount = serializers.SerializerMethodField()
+
+    def get_total_pure_revenue(self, obj):
+        sale_items = obj.saleitem_set.all()
+
+        sales = [item.sale for item in sale_items]
+
+        total_pure_revenue = sum(sale.total_pure_revenue for sale in sales if sale.total_pure_revenue)
+
+        return total_pure_revenue
+    def get_total_amount(self, obj):
+        sale_items = obj.saleitem_set.all()
+
+        sales = [item.sale for item in sale_items]
+
+        total_amount = sum(sale.total_amount for sale in sales if sale.total_amount)
+
+        return total_amount
+
+
     class Meta:
         model = Stock
         fields = ['id',
                   'product_write', 'store_write', 'store_read', "product_read", 'purchase_price_in_uz',
-                  "purchase_price_in_us","price_per_ton",
+                  "purchase_price_in_us", "price_per_ton",
 
                   'selling_price', 'exchange_rate_read',
                   'min_price', "exchange_rate_write", 'quantity', 'quantity_for_history',
                   'history_of_prices', 'selling_price_in_us',
                   'supplier_read', 'supplier_write', 'date_of_arrived', 'total_volume',
-                  'income_weight'
+                  'income_weight', 'total_pure_revenue','total_amount'
                   ]
 
     def create(self, validated_data):
@@ -208,7 +229,7 @@ class StockSerializers(ModelSerializer):
             purchase_price_in_uz=purchase_price_in_uz,
             exchange_rate=exchange_rate_write,
             quantity=quantity,
-            
+
             date_of_arrived=date_of_arrived,
             store=store,
             supplier=supplier,
